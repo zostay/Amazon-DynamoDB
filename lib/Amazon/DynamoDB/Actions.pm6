@@ -1,0 +1,211 @@
+unit class Amazon::DynamoDB::Actions;
+use v6;
+
+use HTTP::UserAgent;
+
+=begin pod
+
+=head1 NAME
+
+Amazon::DynamoDB::Actions - Internal API helper
+
+=head1 DESCRIPTION
+
+This module provides the low-level API that interacts directly with DynamoDB. This API is expected to change rapidly, so no documentation is provided.
+
+Use at your own risk.
+
+=end pod
+
+class GLOBAL::X::Amazon::DynamoDB::Actions::CommunicationError is Exception {
+    has HTTP::Request $.request;
+    has HTTP::Response $.response;
+
+    method message() { "Communication Error" }
+}
+
+class GLOBAL::X::Amazon::DynamoDB::Actions::CRCError is Exception {
+    has Int $.got-crc32;
+    has Int $.expected-crc32;
+
+    method message() { "Response failed CRC32 check, expected $!expected-crc32, but got $!got-crc32" }
+}
+
+has Str $.access-key is required;
+has Str $.secret-key is required;
+has Str $.region is required;
+
+has Str $.scheme = 'https';
+has Str $.domain = 'amazonaws.com';
+
+has HTTP::UserAgent $.ua .= new(:useragent<perl6::Amazon::DynamoDB/0>);
+
+method hostname() { "dynamodb.$!region.$!domain" }
+method port() { "" }
+
+method make-ddb-request($target, *%request) {
+    use HTTP::Request::Common;
+    use JSON::Tiny;
+    use WebService::AWS::Auth::V4;
+
+    my $body = to-json(%request);
+    my $uri  = "$!scheme://$.hostname$.port/";
+
+    my %headers =
+        Host         => $.hostname,
+        Content-Type => 'application/x-amz-json-1.0',
+        X-Amz-Date   => amz-date-formatter(DateTime.now),
+        X-Amz-Target => "DynamoDB_20120810.$target",
+        ;
+
+    my Str @headers = %headers.map({ "{.key}:{.value}" });
+
+    my $v4 = WebService::AWS::Auth::V4.new(
+        :method<POST>, :$body, :$uri, :@headers, :$!region, :service<dynamodb>,
+        :access_key($!access-key), :secret($!secret-key)
+    );
+
+    my $authorization = $v4.signing-header.substr("Authorization: ".chars);
+    %headers<Authorization> = $authorization;
+
+    my $req = POST($uri, :content($body), |%headers);
+    my $res = $!ua.request($req, :bin);
+
+    if $res.is-success {
+        use String::CRC32;
+
+        my $request-id = $res.field('X-Amzn-RequestId').Str;
+        my $crc32      = Int($res.field('X-Amz-Crc32').Str);
+
+        my $got-crc32 = String::CRC32::crc32($res.content);
+
+        if $crc32 != $got-crc32 {
+            die X::Amazon::DynamoDB::Actions::CRCError.new(
+                expected-crc32 => $crc32,
+                got-crc32      => $got-crc32,
+            );
+        }
+
+        my %response = from-json($res.decoded-content);
+        %response<RequestId> = $request-id;
+
+        return %response;
+    }
+    else {
+        die X::Amazon::DynamoDB::Actions::CommunicationError.new(
+            request  => $req,
+            response => $res,
+        );
+    }
+}
+
+method BatchGetItem { ... }
+method BatchWriteItem { ... }
+method DeleteItem { ... }
+
+method GetItem(
+    Str  :%Key!,
+    Str  :$TableName!,
+
+    Str  :@AttributesToGet,
+    Bool :$ConsistentRead,
+    Str  :%ExpressionAttributeNames,
+    Str  :$ProjectionExpression,
+    Str  :$ReturnConsumedCapacity,
+) returns Hash {
+    self.make-ddb-request('GetItem',
+        :%Key,
+        :$TableName,
+
+        :@AttributesToGet,
+        :$ConsistentRead,
+        :%ExpressionAttributeNames,
+        :$ProjectionExpression,
+        :$ReturnConsumedCapacity,
+    );
+}
+
+method PutItem(
+    Hash :%Item!,
+    Str  :$TableName!,
+
+    Str  :$ConditionalOperator,
+    Str  :$ConditionExpression,
+    Hash :%Expected,
+    Str  :%ExressionAttributeNames,
+    Hash :%ExpressionAttributeValues,
+    Str  :$ReturnConsumedCapacity,
+    Str  :$ReturnItemCollectionMetrics,
+    Str  :$ReturnValues,
+) returns Hash {
+    self.make-ddb-request('PutItem',
+        :%Item,
+        :$TableName,
+
+        :$ConditionalOperator,
+        :$ConditionExpression,
+        :%Expected,
+        :%ExressionAttributeNames,
+        :%ExpressionAttributeValues,
+        :$ReturnConsumedCapacity,
+        :$ReturnItemCollectionMetrics,
+        :$ReturnValues,
+    );
+}
+
+method Query { ... }
+method Scan { ... }
+method UpdateItem { ... }
+
+method CreateTable(
+         :@AttributeDefinitions!,
+    Str  :$TableName!,
+         :@KeySchema!,
+         :%ProvisionedThroughput!,
+
+         :@GlobalSecondaryIndexes,
+         :@LocalSecondaryIndexes,
+         :%SSESpecification,
+         :%StreamSpecification,
+) returns Hash {
+    self.make-ddb-request('CreateTable',
+        :@AttributeDefinitions,
+        :$TableName,
+        :@KeySchema,
+        :%ProvisionedThroughput,
+
+        |do if @GlobalSecondaryIndexes { :@GlobalSecondaryIndexes },
+        |do if @LocalSecondaryIndexes { :@LocalSecondaryIndexes },
+        |do if %SSESpecification { :%SSESpecification },
+        |do if %StreamSpecification { :%StreamSpecification },
+    );
+}
+
+method DeleteTable(
+    Str :$TableName,
+) returns Hash {
+    self.make-ddb-request('DeleteTable', :$TableName);
+}
+
+method DescribeTable { ... }
+method DescribeLimits { ... }
+method DescribeTimeToLive { ... }
+method ListTables { ... }
+method UpdateTable { ... }
+method UpdateTimeToLive { ... }
+
+method CreateGlobalTable { ... }
+method DescribeGlobalTable { ... }
+method ListGlobalTables { ... }
+method UpdateGlobalTable { ... }
+
+method ListTagsOfResource { ... }
+method TagResource { ... }
+method UntagResource { ... }
+
+method CreateBackup { ... }
+method DeleteBackup { ... }
+method DescribeBackup { ... }
+method DescribeContinuousBackups { ... }
+method ListBackups { ... }
+method RestoreTableFromBackup { ... }
