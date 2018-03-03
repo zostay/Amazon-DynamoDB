@@ -55,3 +55,7 @@ sub tn(Str $name) is export {
         $name
     }
 }
+
+sub test-data($name) is export {
+    EVALFILE("t/corpus/$name.p6");
+}
