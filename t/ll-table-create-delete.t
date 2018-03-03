@@ -4,36 +4,16 @@ use v6;
 use Test;
 use Amazon::DynamoDB::Actions;
 
-my $scheme       = %*ENV<TEST_AWS_DDB_SCHEME> // 'http';
-my $hostname     = %*ENV<TEST_AWS_DDB_HOSTNAME>;
-my $port         = %*ENV<TEST_AWS_DDB_PORT>;
-my $table-prefix = %*ENV<TEST_AWS_DDB_TABLE_PREFIX> // '';
+use lib 't/lib';
+use Test::Amazon::DynamoDB;
 
-# TODO Support ~/.aws/credentials
-my $region     = %*ENV<AWS_DEFAULT_REGION>;
-my $access-key = %*ENV<AWS_ACCESS_KEY_ID>;
-my $secret-key = %*ENV<AWS_SECRET_ACCESS_KEY>;
-
-unless $hostname && $region && $access-key && $secret-key {
-    plan :skip-all<Missing required environment, at least TEST_AWS_DDB_HOSTNAME, TEST_AWS_DDB_TABLE_PREFIX, AWS_DEFAULT_REGION, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY must be set.>;
+unless test-env-is-ok() {
+    plan :skip-all(test-env-skip-message);
 }
 
 plan 4;
 
-class Test::Amazon::DynamoDB::Actions is Amazon::DynamoDB::Actions {
-    method hostname() { %*ENV<TEST_AWS_DDB_HOSTNAME> }
-    method port() {
-        %*ENV<TEST_AWS_DDB_PORT>
-            ?? ":%*ENV<TEST_AWS_DDB_PORT>"
-            !! ""
-    }
-}
-
-sub tn(Str $name) { $table-prefix ?? "{$table-prefix}_$name" !! $name }
-
-my $ddb = Test::Amazon::DynamoDB::Actions.new(
-    :$region, :$access-key, :$secret-key, :$scheme,
-);
+my $ddb = new-dynamodb-actions();
 
 lives-ok {
     my $res = $ddb.CreateTable(
