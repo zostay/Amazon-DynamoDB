@@ -392,7 +392,15 @@ method ListBackups(
     );
 }
 
-method RestoreTableFromBackup { ... }
+method RestoreTableFromBackup(
+    Str  :$BackupArn!,
+    Str  :$TargetTableName!,
+) returns Hash {
+    self.make-ddb-request('RestoreTableFromBackup',
+        :$BackupArn,
+        :$TargetTableName,
+    );
+}
 
 method DescribeLimits() returns Hash {
     self.make-ddb-request('DescribeLimits');
