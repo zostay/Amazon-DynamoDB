@@ -205,7 +205,48 @@ method PutItem(
     );
 }
 
-method Query { ... }
+method Query(
+    Str  :$TableName!,
+
+         :@AttributesToGet,
+    Str  :$ConditionalOperator,
+    Bool :$ConsistentRead,
+         :%ExclusiveStartKey,
+         :%ExpressionAttributeNames,
+         :%ExpressionAttributeValues,
+    Str  :$FilterExpression,
+    Str  :$IndexName,
+    Str  :$KeyConditionExpression,
+         :%KeyConditions,
+    Int  :$Limit,
+    Str  :$ProjectionExpression,
+         :%QueryFilter,
+    Str  :$ReturnConsumedCapacity,
+    Bool :$ScanIndexForward,
+    Str  :$Select,
+) returns Hash {
+    self.make-ddb-request('Query',
+        :$TableName,
+
+        :@AttributesToGet,
+        :$ConditionalOperator,
+        :$ConsistentRead,
+        :%ExclusiveStartKey,
+        :%ExpressionAttributeNames,
+        :%ExpressionAttributeValues,
+        :$FilterExpression,
+        :$IndexName,
+        :$KeyConditionExpression,
+        :%KeyConditions,
+        :$Limit,
+        :$ProjectionExpression,
+        :%QueryFilter,
+        :$ReturnConsumedCapacity,
+        :$ScanIndexForward,
+        :$Select,
+    );
+}
+
 method Scan { ... }
 method UpdateItem { ... }
 
