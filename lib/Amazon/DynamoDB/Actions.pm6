@@ -103,7 +103,33 @@ method make-ddb-request($target, *%request) {
 
 method BatchGetItem { ... }
 method BatchWriteItem { ... }
-method DeleteItem { ... }
+method DeleteItem(
+         :%Key!,
+    Str  :$TableName!,
+
+    Str  :$ConditionalOperator,
+    Str  :$ConditionExpression,
+    Str  :$Expected,
+         :%ExpressionAttributeNames,
+         :%ExpressionAttributeValues,
+    Str  :$ReturnConsumedCapacity,
+    Str  :$ReturnItemCollectionMetrics,
+    Str  :$ReturnValues,
+) returns Hash {
+    self.make-ddb-request('DeleteItem',
+        :%Key,
+        :$TableName,
+
+        :$ConditionalOperator,
+        :$ConditionExpression,
+        :$Expected,
+        :%ExpressionAttributeNames,
+        :%ExpressionAttributeValues,
+        :$ReturnConsumedCapacity,
+        :$ReturnItemCollectionMetrics,
+        :$ReturnValues,
+    );
+}
 
 method GetItem(
          :%Key!,
