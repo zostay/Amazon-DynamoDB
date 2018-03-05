@@ -101,8 +101,32 @@ method make-ddb-request($target, *%request) {
     }
 }
 
-method BatchGetItem { ... }
-method BatchWriteItem { ... }
+method BatchGetItem(
+         :%RequestItems!,
+
+    Str  :$ReturnConsumedCapacity,
+) returns Hash {
+    self.make-ddb-request('BatchGetItem',
+        :%RequestItems,
+
+        :$ReturnConsumedCapacity,
+    );
+}
+
+method BatchWriteItem(
+         :%RequestItems!,
+
+    Str  :$ReturnConsumedCapacity,
+    Str  :$ReturnItemCollectionMetrics,
+) returns Hash {
+    self.make-ddb-request('BatchWriteItems',
+        :%RequestItems,
+
+        :$ReturnConsumedCapacity,
+        :$ReturnItemCollectionMetrics,
+    );
+}
+
 method DeleteItem(
          :%Key!,
     Str  :$TableName!,
