@@ -489,7 +489,11 @@ method DeleteBackup(
     self.make-ddb-request('DeleteBackup', :$BackupArn);
 }
 
-method DescribeBackup { ... }
+method DescribeBackup(
+    Str  :$BackupArn!,
+) returns Hash {
+    self.make-ddb-request('DescribeBackup', :$BackupArn);
+}
 
 method DescribeContinuousBackups(
     Str  :$TableName!,
