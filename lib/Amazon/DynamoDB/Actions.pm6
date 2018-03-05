@@ -239,9 +239,18 @@ method DeleteTable(
     self.make-ddb-request('DeleteTable', :$TableName);
 }
 
-method DescribeTable { ... }
-method DescribeLimits { ... }
-method DescribeTimeToLive { ... }
+method DescribeTable(
+    Str  :$TableName!,
+) returns Hash {
+    self.make-ddb-request('DescribeTable', :$TableName);
+}
+
+method DescribeTimeToLive(
+    Str  :$TableName!,
+) returns Hash {
+    self.make-ddb-request('DescribeTimeToLive', :$TableName);
+}
+
 method ListTables { ... }
 method UpdateTable { ... }
 method UpdateTimeToLive { ... }
@@ -256,7 +265,14 @@ method CreateGlobalTable(
     );
 }
 
-method DescribeGlobalTable { ... }
+method DescribeGlobalTable(
+    Str  :$GlobalTableName!,
+) returns Hash {
+    self.make-ddb-request('DescribeGlobalTable',
+        :$GlobalTableName,
+    );
+}
+
 method ListGlobalTables { ... }
 method UpdateGlobalTable { ... }
 
@@ -281,6 +297,16 @@ method DeleteBackup(
 }
 
 method DescribeBackup { ... }
-method DescribeContinuousBackups { ... }
+
+method DescribeContinuousBackups(
+    Str  :$TableName!,
+) returns Hash {
+    self.make-ddb-request('DescribeContinuousBackups', :$TableName);
+}
+
 method ListBackups { ... }
 method RestoreTableFromBackup { ... }
+
+method DescribeLimits() returns Hash {
+    self.make-ddb-request('DescribeLimits');
+}
