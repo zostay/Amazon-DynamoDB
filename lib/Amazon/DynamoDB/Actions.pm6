@@ -370,8 +370,25 @@ method ListTagsOfResource(
     );
 }
 
-method TagResource { ... }
-method UntagResource { ... }
+method TagResource(
+    Str  :$ResourceArn!,
+         :@Tags!,
+) returns Hash {
+    self.make-ddb-reqeust('TagResource',
+        :$ResourceArn,
+        :@Tags,
+    );
+}
+
+method UntagResource(
+    Str  :$ResourceArn!,
+         :@TagKeys!,
+) returns Hash {
+    self.make-ddb-request('UntagResource',
+        :$ResourceArn,
+        :@TagKeys,
+    );
+}
 
 method CreateBackup(
     Str  :$BackupName!,
