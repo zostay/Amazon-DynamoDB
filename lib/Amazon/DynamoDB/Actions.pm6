@@ -251,7 +251,16 @@ method DescribeTimeToLive(
     self.make-ddb-request('DescribeTimeToLive', :$TableName);
 }
 
-method ListTables { ... }
+method ListTables(
+    Str  :$ExclusiveStartTableName,
+    Int  :$Limit,
+) returns Hash {
+    self.make-ddb-request('ListTables',
+        :$ExclusiveStartTableName,
+        :$Limit,
+    );
+}
+
 method UpdateTable { ... }
 method UpdateTimeToLive { ... }
 
@@ -273,10 +282,32 @@ method DescribeGlobalTable(
     );
 }
 
-method ListGlobalTables { ... }
+method ListGlobalTables(
+    Str  :$ExclusiveStartGlobalTableName,
+    Int  :$Limit,
+    Str  :$RegionName,
+) returns Hash {
+    self.make-ddb-request('ListGlobalTables',
+        :$ExclusiveStartGlobalTableName,
+        :$Limit,
+        :$RegionName,
+    );
+}
+
 method UpdateGlobalTable { ... }
 
-method ListTagsOfResource { ... }
+method ListTagsOfResource(
+    Str  :$ResourceArn!,
+
+    Str  :$NextToken,
+) returns Hash {
+    self.make-ddb-request('ListTagsOfResource',
+        :$ResourceArn,
+
+        :$NextToken,
+    );
+}
+
 method TagResource { ... }
 method UntagResource { ... }
 
@@ -304,7 +335,22 @@ method DescribeContinuousBackups(
     self.make-ddb-request('DescribeContinuousBackups', :$TableName);
 }
 
-method ListBackups { ... }
+method ListBackups(
+    Str  :$ExclusiveStartBackupArn,
+    Int  :$Limit,
+    Str  :$TableName,
+    Int  :$TimeRangeLowerBound,
+    Int  :$TimeRangeUpperBound,
+) returns Hash {
+    self.make-ddb-request('ListBackups',
+        :$ExclusiveStartBackupArn,
+        :$Limit,
+        :$TableName,
+        :$TimeRangeLowerBound,
+        :$TimeRangeUpperBound,
+    );
+}
+
 method RestoreTableFromBackup { ... }
 
 method DescribeLimits() returns Hash {
