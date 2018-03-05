@@ -11,12 +11,15 @@ unless test-env-is-ok() {
     plan :skip-all(test-env-skip-message);
 }
 
-plan 4;
+plan 2;
 
 my $ddb = new-dynamodb-actions();
 
+$ddb.CreateTable(|test-data('Thread-create'));
+LAST $ddb.DeleteTable(TableName => tn('Thread'));
+
 lives-ok {
-    my $res = $ddb.CreateTable(|test-data('Thread-create'));
+    my $res = $ddb.PutItem(|test-data('Thread-put'));
 
     CATCH {
         when X::Amazon::DynamoDB::Actions::CommunicationError {
@@ -27,13 +30,7 @@ lives-ok {
         }
     }
 
-    is $res<TableDescription><TableName>, tn('Thread');
-}
-
-lives-ok {
-    my $res = $ddb.DeleteTable(TableName => tn('Thread'));
-
-    is $res<TableDescription><TableName>, tn('Thread');
+    ok $res;
 }
 
 done-testing;

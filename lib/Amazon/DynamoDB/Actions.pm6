@@ -48,7 +48,9 @@ method make-ddb-request($target, *%request) {
     use JSON::Tiny;
     use WebService::AWS::Auth::V4;
 
-    my $body = to-json(%request);
+    my %cruftless-request = %request.grep({ ?.value });
+
+    my $body = to-json(%cruftless-request);
     my $uri  = "$!scheme://$.hostname$.port/";
 
     my %headers =
@@ -104,12 +106,12 @@ method BatchWriteItem { ... }
 method DeleteItem { ... }
 
 method GetItem(
-    Str  :%Key!,
+         :%Key!,
     Str  :$TableName!,
 
-    Str  :@AttributesToGet,
+         :@AttributesToGet,
     Bool :$ConsistentRead,
-    Str  :%ExpressionAttributeNames,
+         :%ExpressionAttributeNames,
     Str  :$ProjectionExpression,
     Str  :$ReturnConsumedCapacity,
 ) returns Hash {
@@ -126,14 +128,14 @@ method GetItem(
 }
 
 method PutItem(
-    Hash :%Item!,
+         :%Item!,
     Str  :$TableName!,
 
     Str  :$ConditionalOperator,
     Str  :$ConditionExpression,
-    Hash :%Expected,
-    Str  :%ExressionAttributeNames,
-    Hash :%ExpressionAttributeValues,
+         :%Expected,
+         :%ExressionAttributeNames,
+         :%ExpressionAttributeValues,
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
@@ -174,10 +176,10 @@ method CreateTable(
         :@KeySchema,
         :%ProvisionedThroughput,
 
-        |do if @GlobalSecondaryIndexes { :@GlobalSecondaryIndexes },
-        |do if @LocalSecondaryIndexes { :@LocalSecondaryIndexes },
-        |do if %SSESpecification { :%SSESpecification },
-        |do if %StreamSpecification { :%StreamSpecification },
+        :@GlobalSecondaryIndexes,
+        :@LocalSecondaryIndexes,
+        :%SSESpecification,
+        :%StreamSpecification,
     );
 }
 

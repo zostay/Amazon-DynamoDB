@@ -25,7 +25,7 @@ sub test-env is export {
         scheme       => %*ENV<TEST_AWS_DDB_SCHEME> // 'http',
         hostname     => %*ENV<TEST_AWS_DDB_HOSTNAME>,
         port         => %*ENV<TEST_AWS_DDB_PORT>,
-        table-prefix => %*ENV<TEST_AWS_DDB_TABLE_PREFIX> // '',
+        table-prefix => %*ENV<TEST_AWS_DDB_TABLE_PREFIX>,
 
         # TODO Support ~/.aws/credentials
         region     => %*ENV<AWS_DEFAULT_REGION>,
@@ -47,12 +47,18 @@ sub test-env-skip-message is export {
     q<Missing required environment, at least TEST_AWS_DDB_HOSTNAME, TEST_AWS_DDB_TABLE_PREFIX, AWS_DEFAULT_REGION, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY must be set.>;
 }
 
+sub test-prefix is export {
+    my $test-name = $*PROGRAM-NAME.IO.basename.subst(/.t$/, '');
+    $test-name ~ $*PID
+}
+
 sub tn(Str $name) is export {
+    my $test-tn = join '_', test-prefix(), $name;
     with test-env.<table-prefix> -> $table-prefix {
-        "{$table-prefix}_$name";
+        join '_', $table-prefix, $test-tn
     }
     else {
-        $name
+        $test-tn
     }
 }
 
