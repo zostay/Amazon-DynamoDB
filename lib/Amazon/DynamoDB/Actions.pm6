@@ -255,8 +255,22 @@ method ListTagsOfResource { ... }
 method TagResource { ... }
 method UntagResource { ... }
 
-method CreateBackup { ... }
-method DeleteBackup { ... }
+method CreateBackup(
+    Str  :$BackupName!,
+    Str  :$TableName!,
+) returns Hash {
+    self.make-ddb-request('CreateBackup',
+        :$BackupName,
+        :$TableName,
+    );
+}
+
+method DeleteBackup(
+    Str  :$BackupArn!,
+) returns Hash {
+    self.make-ddb-request('DeleteBackup', :$BackupArn);
+}
+
 method DescribeBackup { ... }
 method DescribeContinuousBackups { ... }
 method ListBackups { ... }
