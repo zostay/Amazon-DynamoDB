@@ -247,7 +247,28 @@ method Query(
     );
 }
 
-method Scan { ... }
+method Scan(
+    Str  :$TableName!,
+
+          :@AttributesToGet,
+    Str  :$ConditionalOperator,
+    Bool :$ConsistentRead,
+         :%ExclusiveStartKey,
+         :%ExpressionAttributeNames,
+         :%ExpressionAttributeValues,
+    Str  :$FilterExpression,
+    Str  :$IndexName,
+    Int  :$Limit,
+    Str  :$ProjectionExpression,
+         :%QueryFilter,
+    Str  :$ReturnConsumedCapacity,
+         :%ScanFilter,
+    Int  :$Segment,
+    Str  :$Select,
+    Int  :$TotalSegments,
+
+) returns Hash {
+}
 method UpdateItem { ... }
 
 method CreateTable(
