@@ -22,7 +22,7 @@
     },
     ConditionExpression => "ForumName <> :f and Subject <> :s",
     ExpressionAttributeValues => {
-        :f => {S => "Amazon DynamoDB"},
-        :s => {S => "How do I update multiple items?"}
+        ':f' => {S => "Amazon DynamoDB"},
+        ':s' => {S => "How do I update multiple items?"}
     }
 )
