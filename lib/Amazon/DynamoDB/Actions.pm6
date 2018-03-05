@@ -246,7 +246,16 @@ method ListTables { ... }
 method UpdateTable { ... }
 method UpdateTimeToLive { ... }
 
-method CreateGlobalTable { ... }
+method CreateGlobalTable(
+    Str  :$GlobalTableName!,
+         :@ReplicationGroup!,
+) returns Hash {
+    self.make-ddb-request('CreateGlobalTable',
+        :$GlobalTableName,
+        :@ReplicationGroup,
+    );
+}
+
 method DescribeGlobalTable { ... }
 method ListGlobalTables { ... }
 method UpdateGlobalTable { ... }
