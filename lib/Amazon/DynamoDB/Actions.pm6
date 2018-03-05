@@ -250,7 +250,7 @@ method Query(
 method Scan(
     Str  :$TableName!,
 
-          :@AttributesToGet,
+         :@AttributesToGet,
     Str  :$ConditionalOperator,
     Bool :$ConsistentRead,
          :%ExclusiveStartKey,
@@ -266,10 +266,60 @@ method Scan(
     Int  :$Segment,
     Str  :$Select,
     Int  :$TotalSegments,
-
 ) returns Hash {
+    self.make-ddb-request('Scan',
+        :$TableName,
+
+        :@AttributesToGet,
+        :$ConditionalOperator,
+        :$ConsistentRead,
+        :%ExclusiveStartKey,
+        :%ExpressionAttributeNames,
+        :%ExpressionAttributeValues,
+        :$FilterExpression,
+        :$IndexName,
+        :$Limit,
+        :$ProjectionExpression,
+        :%QueryFilter,
+        :$ReturnConsumedCapacity,
+        :%ScanFilter,
+        :$Segment,
+        :$Select,
+        :$TotalSegments,
+    );
 }
-method UpdateItem { ... }
+
+method UpdateItem(
+         :%Key!,
+    Str  :$TableName!,
+
+         :%AttributeUpdates,
+    Str  :$ConditionalOperator,
+    Str  :$ConditionExpression,
+         :%Expected,
+         :%ExpressionAttributeNames,
+         :%ExpressionAttributeValues,
+    Str  :$ReturnConsumedCapacity,
+    Str  :$ReturnItemCollectionMetrics,
+    Str  :$ReturnValues,
+    Str  :$UpdateExpression,
+) returns Hash {
+    self.make-ddb-request('UpdateItem',
+        :%Key,
+        :$TableName,
+
+        :%AttributeUpdates,
+        :$ConditionalOperator,
+        :$ConditionExpression,
+        :%Expected,
+        :%ExpressionAttributeNames,
+        :%ExpressionAttributeValues,
+        :$ReturnConsumedCapacity,
+        :$ReturnItemCollectionMetrics,
+        :$ReturnValues,
+        :$UpdateExpression,
+    );
+}
 
 method CreateTable(
          :@AttributeDefinitions!,
@@ -323,8 +373,33 @@ method ListTables(
     );
 }
 
-method UpdateTable { ... }
-method UpdateTimeToLive { ... }
+method UpdateTable(
+    Str  :$TableName!,
+
+         :@AttributeDefinitions,
+         :@GlobalSecondaryIndexUpdates,
+         :%ProvisionedThroughput,
+         :%StreamSpecification,
+) returns Hash {
+    self.make-ddb-request('UpdateTable',
+        :$TableName,
+
+        :@AttributeDefinitions,
+        :@GlobalSecondaryIndexUpdates,
+        :%ProvisionedThroughput,
+        :%StreamSpecification,
+    );
+}
+
+method UpdateTimeToLive(
+    Str  :$TableName!,
+         :%TableToLiveSpecification!,
+) returns Hash {
+    self.make-ddb-request('UpdateTimeToLive',
+        :$TableName,
+        :%TableToLiveSpecification,
+    );
+}
 
 method CreateGlobalTable(
     Str  :$GlobalTableName!,
@@ -356,7 +431,15 @@ method ListGlobalTables(
     );
 }
 
-method UpdateGlobalTable { ... }
+method UpdateGlobalTable(
+    Str  :$GlobalTableName!,
+         :@ReplicaUpdates!,
+) returns Hash {
+    self.make-ddb-request('UpdateGlobalTable',
+        :$GlobalTableName,
+        :@ReplicaUpdates,
+    );
+}
 
 method ListTagsOfResource(
     Str  :$ResourceArn!,
