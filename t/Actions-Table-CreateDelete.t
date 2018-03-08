@@ -2,7 +2,7 @@
 use v6;
 
 use Test;
-use Amazon::DynamoDB::Actions;
+use Amazon::DynamoDB;
 
 use lib 't/lib';
 use Test::Amazon::DynamoDB;
@@ -19,7 +19,7 @@ lives-ok {
     my $res = $ddb.CreateTable(|test-data('Thread-create'));
 
     CATCH {
-        when X::Amazon::DynamoDB::Actions::CommunicationError {
+        when X::Amazon::DynamoDB::CommunicationError {
             note .request.Str;
             note .response.decoded-content;
 
