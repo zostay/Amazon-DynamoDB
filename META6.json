@@ -1,0 +1,30 @@
+{
+   "meta6" : "0",
+   "provides" : {
+       "Amazon::DynamoDB" : "lib/Amazon/DynamoDB.pm6"
+   },
+   "test-depends" : [
+      "Test", "Test::META"
+   ],
+   "support" : {
+      "source" : "git://github.com/zostay/Amazon-DynamoDB.git"
+   },
+   "perl" : "6.c",
+   "build-depends" : [],
+   "auth" : "github:zostay",
+   "source-url" : "git://github.com/zostay/Amazon-DynamoDB.git",
+   "depends" : [
+       "AWS::Session",
+       "HTTP::UserAgent",
+       "JSON::Tiny",
+       "WebService::AWS::Auth::V4",
+       "String::CRC32"
+   ],
+   "name" : "Amazon::DynamoDB",
+   "authors" : [
+      "Sterling Hanenkamp <hanenkamp@cpan.org>"
+   ],
+   "version" : "0.1",
+   "license" : "Artistic-2.0",
+   "description" : "Low-level access to the DynamoDB API"
+}
