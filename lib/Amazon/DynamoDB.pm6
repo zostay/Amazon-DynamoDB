@@ -1,6 +1,8 @@
-class Amazon::DynamoDB;
+class Amazon::DynamoDB:ver<0.1>:auth<github:zostay>;
 use v6;
 
+use AWS::Session;
+use AWS::Credentials;
 use HTTP::UserAgent;
 
 =begin pod
@@ -9,11 +11,18 @@ use HTTP::UserAgent;
 
 Amazon::DynamoDB - Low-level access to the DynamoDB API
 
+=head1 SYNOPSIS
+
+    use Amazon::DynamoDB;
+
+    my $ddb = Amazon::DynamoDB.new
+
 =head1 DESCRIPTION
 
-This module provides the low-level API that interacts directly with DynamoDB. This API is expected to change rapidly, so no documentation is provided.
+This module provides the low-level API that interacts directly with DynamoDB.
 
-Use at your own risk.
+The API is currently very primitive and will likely change to provide better
+type-checking in the future.
 
 =end pod
 
@@ -31,26 +40,39 @@ class GLOBAL::X::Amazon::DynamoDB::CRCError is Exception {
     method message() { "Response failed CRC32 check, expected $!expected-crc32, but got $!got-crc32" }
 }
 
-has Str $.access-key is required;
-has Str $.secret-key is required;
-has Str $.region is required;
+has AWS::Session $.session is rw;
+has AWS::Credentials $.credentials is rw;
 
 has Str $.scheme = 'https';
 has Str $.domain = 'amazonaws.com';
 
-has HTTP::UserAgent $.ua .= new(:useragent<perl6::Amazon::DynamoDB/0>);
+has HTTP::UserAgent $.ua .= new(:useragent("perl6-$?PACKAGE.^name()/$?PACKAGE.^ver()"));
 
-method hostname() { "dynamodb.$!region.$!domain" }
+method hostname() { "dynamodb.$.region.$!domain" }
 method port() { "" }
+
+method session() returns AWS::Session is rw {
+    $!session //= AWS::Session.new;
+    return-rw $!session;
+}
+
+method credentials() returns AWS::Credentials is rw {
+    $!credentials //= load-credentials($.session);
+    return-rw $!credentials;
+}
+
+method access-key() { $.credentials.access-key }
+method secret-key() { $.credentials.secret-key }
+method region()     { $.session.region }
 
 method make-ddb-request($target, *%request) {
     use HTTP::Request::Common;
     use JSON::Tiny;
     use WebService::AWS::Auth::V4;
 
-    my %cruftless-request = %request.grep({ ?.value });
+    my %crisp-request = %request.grep({ ?.value });
 
-    my $body = to-json(%cruftless-request);
+    my $body = to-json(%crisp-request);
     my $uri  = "$!scheme://$.hostname$.port/";
 
     my %headers =
@@ -63,8 +85,8 @@ method make-ddb-request($target, *%request) {
     my Str @headers = %headers.map({ "{.key}:{.value}" });
 
     my $v4 = WebService::AWS::Auth::V4.new(
-        :method<POST>, :$body, :$uri, :@headers, :$!region, :service<dynamodb>,
-        :access_key($!access-key), :secret($!secret-key)
+        :method<POST>, :$body, :$uri, :@headers, :$.region, :service<dynamodb>,
+        :access_key($.access-key), :secret($.secret-key)
     );
 
     my $authorization = $v4.signing-header.substr("Authorization: ".chars);
