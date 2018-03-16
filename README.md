@@ -10,6 +10,102 @@ SYNOPSIS
 
     my $ddb = Amazon::DynamoDB.new
 
+    $ddb.CreateTable(
+        AttributeDefinitions => [
+            {
+                AttributeName => 'ForumName',
+                AttributeType => 'S',
+            },
+            {
+                AttributeName => 'Subject',
+                AttributeType => 'S',
+            },
+            {
+                AttributeName => 'LastPostDateTime',
+                AttributeType => 'S',
+            },
+        ],
+        TableName => 'Thread',
+        KeySchema => [
+            {
+                AttributeName => 'ForumName',
+                KeyType       => 'HASH',
+            },
+            {
+                AttributeName => 'Subject',
+                KeyType       => 'RANGE',
+            },
+        ],
+        LocalSecondaryIndexes => [
+            {
+                IndexName => 'LastPostIndex',
+                KeySchema => [
+                    {
+                        AttributeName => 'ForumName',
+                        KeyType       => 'HASH',
+                    },
+                    {
+                        AttributeName => 'LastPostDateTime',
+                        KeyType       => 'RANGE',
+                    }
+                ],
+                Projection => {
+                    ProjectionType => 'KEYS_ONLY'
+                },
+            },
+        ],
+        ProvisionedThroughput => {
+            ReadCapacityUnits  => 5,
+            WriteCapacityUnits => 5,
+        },
+    );
+
+    $ddb.PutItem(
+        TableName => "Thread",
+        Item => {
+            LastPostDateTime => {
+                S => "201303190422"
+            },
+            Tags => {
+                SS => ["Update","Multiple Items","HelpMe"]
+            },
+            ForumName => {
+                S => "Amazon DynamoDB"
+            },
+            Message => {
+                S => "I want to update multiple items in a single call. What's the best way to do that?"
+            },
+            Subject => {
+                S => "How do I update multiple items?"
+            },
+            LastPostedBy => {
+                S => "fred@example.com"
+            }
+        },
+        ConditionExpression => "ForumName <> :f and Subject <> :s",
+        ExpressionAttributeValues => {
+            ':f' => {S => "Amazon DynamoDB"},
+            ':s' => {S => "How do I update multiple items?"}
+        }
+    );
+
+    my $res = $ddb.GetItem(
+        TableName => tn("Thread"),
+        Key => {
+            ForumName => {
+                S => "Amazon DynamoDB"
+            },
+            Subject => {
+                S => "How do I update multiple items?"
+            }
+        },
+        ProjectionExpression => "LastPostDateTime, Message, Tags",
+        ConsistentRead => True,
+        ReturnConsumedCapacity => "TOTAL"
+    );
+
+    say "Message: $res<Item><Message><S>";
+
 DESCRIPTION
 ===========
 
