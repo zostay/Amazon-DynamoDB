@@ -1,4 +1,4 @@
-class Amazon::DynamoDB:ver<0.1>:auth<github:zostay>;
+unit class Amazon::DynamoDB:ver<0.1>:auth<github:zostay>;
 use v6;
 
 use AWS::Session;
@@ -419,8 +419,8 @@ has Int $.port;
 
 has HTTP::UserAgent $.ua .= new(:useragent("perl6-$?PACKAGE.^name()/$?PACKAGE.^ver()"));
 
-method hostname() return Str:D { $!hostname.defined ?? $!hostname !! "dynamodb.$.region.$!domain" }
-method port-suffix() return Str:D { $!port.defined ?? ":$!port" !! "" }
+method hostname() returns Str:D { $!hostname.defined ?? $!hostname !! "dynamodb.$.region.$!domain" }
+method port-suffix() returns Str:D { $!port.defined ?? ":$!port" !! "" }
 
 method session() returns AWS::Session is rw {
     $!session //= AWS::Session.new;
