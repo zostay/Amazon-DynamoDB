@@ -97,7 +97,7 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
     );
 
     my $res = $ddb.GetItem(
-        TableName => tn("Thread"),
+        TableName => "Thread",
         Key => {
             ForumName => {
                 S => "Amazon DynamoDB"

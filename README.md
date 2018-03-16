@@ -90,7 +90,7 @@ SYNOPSIS
     );
 
     my $res = $ddb.GetItem(
-        TableName => tn("Thread"),
+        TableName => "Thread",
         Key => {
             ForumName => {
                 S => "Amazon DynamoDB"
