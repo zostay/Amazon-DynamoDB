@@ -1,4 +1,4 @@
-unit class Amazon::DynamoDB:ver<0.1>:auth<github:zostay>;
+unit class Amazon::DynamoDB:ver<0.2>:auth<github:zostay>;
 use v6;
 
 use AWS::Session;
@@ -128,6 +128,31 @@ type-checking in the future.
 =head1 DIAGNOSTICS
 
 The following exceptions may be thrown by this module:
+
+=head2 X::Amazon::DynamoDB::APIException
+
+This encapsulates the errors returned from the API itself. The name of the error can be checked at the C<type> method and the message in C<message>. It has the following accessors:
+
+=item request-id The request id returned with the error.
+=item raw-type The __type returned with the error (a combination of the API version and error type).
+=item type The error type pulled from the raw-type.
+=item message The detailed message sent with the error.
+
+This is the exception you will most likely want to capture. For this reason, a special helper named C<of-type> is provided to aid in easy matching.
+
+For example, if you
+want to perform a C<CreateTable> operation, but ignore any
+"ResourceInUseException" indicating that the table already exists, it is
+recommended that you do something like this:
+
+    my $ddb = Amazon::DynamoDB.new;
+    $ddb.CreateTable( ... );
+
+    CATCH {
+        when X::Amazon::DynamoDB::APIException.of-type('ResourceInUseException') {
+            # ignore
+        }
+    }
 
 =head2 X::Amazon::DynamoDB::CommunicationError
 
@@ -505,6 +530,22 @@ class GLOBAL::X::Amazon::DynamoDB::CRCError is Exception {
     method message() { "Response failed CRC32 check, expected $!expected-crc32, but got $!got-crc32" }
 }
 
+class GLOBAL::X::Amazon::DynamoDB::APIException is Exception {
+    has Str $.request-id;
+    has Str $.raw-type;
+    has Str $.message;
+
+    method type(::?CLASS:D:) { $!raw-type.split('#', 2)[1] }
+
+    method of-type(::?CLASS:U: $type) {
+        -> $x {
+            $x ~~ ::?CLASS
+                && $x.defined
+                && $x.type eq $type
+        }
+    }
+}
+
 has AWS::Session $.session is rw;
 has AWS::Credentials $.credentials is rw;
 
@@ -581,6 +622,24 @@ method make-ddb-request($target, *%request) {
         %response<RequestId> = $request-id;
 
         return %response;
+    }
+    elsif $res.code == 400
+            && $res.content-type eq 'application/x-amz-json-1.0'
+            && from-json($res.decoded-content) -> $error {
+
+        if $error<__type> && $error<message> {
+            die X::Amazon::DynamoDB::APIException.new(
+                request-id => $res.field('X-Amzn-RequestId'),
+                raw-type   => $error<__type>,
+                message    => $error<message>,
+            );
+        }
+        else {
+            die X::Amazon::DynamoDB::CommunicationError.new(
+                request  => $req,
+                response => $res,
+            );
+        }
     }
     else {
         die X::Amazon::DynamoDB::CommunicationError.new(
