@@ -1,4 +1,4 @@
-unit class Amazon::DynamoDB:ver<0.2>:auth<github:zostay>;
+unit class Amazon::DynamoDB:ver<0.1>:auth<github:zostay>;
 use v6;
 
 use AWS::Session;
