@@ -629,7 +629,7 @@ method make-ddb-request($target, *%request) {
 
         if $error<__type> && $error<message> {
             die X::Amazon::DynamoDB::APIException.new(
-                request-id => $res.field('X-Amzn-RequestId'),
+                request-id => $res.field('X-Amzn-RequestId').Str,
                 raw-type   => $error<__type>,
                 message    => $error<message>,
             );
