@@ -1,6 +1,7 @@
 use v6;
 
 use JSON::Tiny;
+use String::CRC32;
 use Test;
 use Amazon::DynamoDB;
 
@@ -9,6 +10,7 @@ use Test::Amazon::DynamoDB;
 
 my $rid = 1;
 my @reqs;
+my @ress;
 my $ddb = Amazon::DynamoDB.new(
     scheme => 'https',
     hostname => 'testing',
@@ -22,45 +24,28 @@ my $ddb = Amazon::DynamoDB.new(
                 :$content,
             );
 
+            my $text = to-json(@ress.pop);
+            my $blob = $text.encode('UTF-8');
+
             return %(
                 Status => 200,
                 Header => %(
                     x-amzn-requestid => $rid++,
-                    x-amzn-crc32     => 'xxxxxxxxx',
+                    x-amz-crc32     => String::CRC32::crc32($blob),
                 ),
-                RawContent => buf8.new,
-                DecodedContent => '{}',
+                RawContent => $blob,
+                DecodedContent => $text,
             );
         }
     }.new,
 );
 
 {
-    my %data =
-        RequestItems => %(
-            Forum => %(
-                Keys => @(
-                    %( Name => %(S => 'Amazon DynamoDB') ),
-                    %( Name => %(S => 'Amazon RDS') ),
-                    %( Name => %(S => 'Amazon Redshift') ),
-                ),
-                ProjectionExpression => 'Name, Threads, Messages, Views',
-            ),
-            Thread => %(
-                Keys => @(
-                    %(
-                        ForumName => %( S => 'Amazon DynamoDB' ),
-                        Subject => %( S => 'Concurrent reads' ),
-                    ),
-                ),
-                ProjectionExpression => 'Tags, Message',
-            ),
+    my %req-data = test-data('AWS-BatchGetItem-Request');
+    my %res-data = test-data('AWS-BatchGetItem-Response');
+    @ress.push: %res-data;
 
-        ),
-        ReturnConsumedCapacity => 'TOTAL',
-    ;
-
-    $ddb.BatchGetItem(|%data);
+    my $res = $ddb.BatchGetItem(|%req-data);
 
     is @reqs.elems, 1;
 
@@ -78,8 +63,11 @@ my $ddb = Amazon::DynamoDB.new(
             Host => 'testing',
             X-Amz-Target => 'DynamoDB_20120810.BatchGetItem',
         ),
-        content => to-json(%data),
+        content => to-json(%req-data),
     );
+
+    is $res<RequestId>:delete, $rid-1;
+    is $res, %res-data;
 }
 
 done-testing;
