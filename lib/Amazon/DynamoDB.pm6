@@ -3,7 +3,8 @@ use v6;
 
 use AWS::Session;
 use AWS::Credentials;
-use HTTP::UserAgent;
+
+use Amazon::DynamoDB::UA;
 
 =begin pod
 
@@ -517,8 +518,8 @@ the return value.
 =end pod
 
 class GLOBAL::X::Amazon::DynamoDB::CommunicationError is Exception {
-    has HTTP::Request $.request;
-    has HTTP::Response $.response;
+    has %.request;
+    has %.response;
 
     method message() { "Communication Error" }
 }
@@ -554,7 +555,7 @@ has Str $.domain = 'amazonaws.com';
 has Str $.hostname;
 has Int $.port;
 
-has HTTP::UserAgent $.ua .= new(:useragent("perl6-$?PACKAGE.^name()/$?PACKAGE.^ver()"));
+has Amazon::DynamoDB::UA $.ua = Amazon::DynamoDB::UA::AutoUA.new;
 
 method hostname() returns Str:D { $!hostname.defined ?? $!hostname !! "dynamodb.$.region.$!domain" }
 method port-suffix() returns Str:D { $!port.defined ?? ":$!port" !! "" }
@@ -600,16 +601,16 @@ method make-ddb-request($target, *%request) {
     my $authorization = $v4.signing-header.substr("Authorization: ".chars);
     %headers<Authorization> = $authorization;
 
-    my $req = POST($uri, :content($body), |%headers);
-    my $res = $!ua.request($req, :bin);
+    my %req = :method<POST>, :$uri, :%headers, :content($body);
+    my %res = $!ua.request(|%req);
 
-    if $res.is-success {
+    if %res<Status> == 200 {
         use String::CRC32;
 
-        my $request-id = $res.field('X-Amzn-RequestId').Str;
-        my $crc32      = Int($res.field('X-Amz-Crc32').Str);
+        my $request-id = %res<Header><x-amzn-requestid>.Str;
+        my $crc32      = Int(%res<Header><x-amz-crc32>.Str);
 
-        my $got-crc32 = String::CRC32::crc32($res.content);
+        my $got-crc32 = String::CRC32::crc32(%res<RawContent>);
 
         if $crc32 != $got-crc32 {
             die X::Amazon::DynamoDB::CRCError.new(
@@ -618,17 +619,17 @@ method make-ddb-request($target, *%request) {
             );
         }
 
-        my %response = from-json($res.decoded-content);
+        my %response = from-json(%res<DecodedContent>);
         %response<RequestId> = $request-id;
 
         return %response;
     }
-    elsif $res.code == 400
-            && $res.content-type eq 'application/x-amz-json-1.0'
-            && from-json($res.decoded-content) -> $error {
+    elsif %res<Status> == 400
+            && %res<Header><content-type> eq 'application/x-amz-json-1.0'
+            && from-json(%res<DecodedContent>) -> $error {
 
         if $error<__type> && $error<message> {
-            my $request-id = $res.field('X-Amzn-RequestId').Str,
+            my $request-id = %res<x-amzn-requestid>.Str,
             die X::Amazon::DynamoDB::APIException.new(
                 request-id => $request-id,
                 raw-type   => $error<__type>,
@@ -637,15 +638,15 @@ method make-ddb-request($target, *%request) {
         }
         else {
             die X::Amazon::DynamoDB::CommunicationError.new(
-                request  => $req,
-                response => $res,
+                request  => %req,
+                response => %res,
             );
         }
     }
     else {
         die X::Amazon::DynamoDB::CommunicationError.new(
-            request  => $req,
-            response => $res,
+            request  => %req,
+            response => %res,
         );
     }
 }
