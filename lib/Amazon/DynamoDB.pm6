@@ -628,8 +628,9 @@ method make-ddb-request($target, *%request) {
             && from-json($res.decoded-content) -> $error {
 
         if $error<__type> && $error<message> {
+            my $request-id = $res.field('X-Amzn-RequestId').Str,
             die X::Amazon::DynamoDB::APIException.new(
-                request-id => $res.field('X-Amzn-RequestId').Str,
+                request-id => $request-id,
                 raw-type   => $error<__type>,
                 message    => $error<message>,
             );
