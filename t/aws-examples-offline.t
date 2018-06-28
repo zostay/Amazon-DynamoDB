@@ -1,6 +1,6 @@
 use v6;
 
-use JSON::Tiny;
+use JSON::Fast;
 use String::CRC32;
 use Test;
 use Amazon::DynamoDB;
@@ -24,7 +24,7 @@ my $ddb = Amazon::DynamoDB.new(
                 :$content,
             );
 
-            my $text = to-json(@ress.pop);
+            my $text = to-json(@ress.pop, :sorted-keys);
             my $blob = $text.encode('UTF-8');
 
             return %(
@@ -40,12 +40,19 @@ my $ddb = Amazon::DynamoDB.new(
     }.new,
 );
 
-{
-    my %req-data = test-data('AWS-BatchGetItem-Request');
-    my %res-data = test-data('AWS-BatchGetItem-Response');
+my @methods = <
+    BatchGetItem BatchWriteItem CreateTable DeleteItem
+    DeleteTable DescribeLimits DescribeTable GetItem
+    ListTables PutItem Query Scan
+    UpdateItem UpdateTable
+>;
+
+for @methods -> $method {
+    my %req-data = test-data("AWS-{$method}-Request");
+    my %res-data = test-data("AWS-{$method}-Response");
     @ress.push: %res-data;
 
-    my $res = $ddb.BatchGetItem(|%req-data);
+    my $res = $ddb."$method"(|%req-data);
 
     is @reqs.elems, 1;
 
@@ -55,19 +62,19 @@ my $ddb = Amazon::DynamoDB.new(
     $req<headers><Authorization>:delete;
     $req<headers><X-Amz-Date>:delete;
 
-    is $req, %(
+    is-deeply $req, %(
         method => 'POST',
         uri    => 'https://testing:1234/',
         headers => %(
             Content-Type => 'application/x-amz-json-1.0',
             Host => 'testing',
-            X-Amz-Target => 'DynamoDB_20120810.BatchGetItem',
+            X-Amz-Target => "DynamoDB_20120810.$method",
         ),
-        content => to-json(%req-data),
-    );
+        content => to-json(%req-data, :sorted-keys),
+    ), "$method request";
 
-    is $res<RequestId>:delete, $rid-1;
-    is $res, %res-data;
+    is $res<RequestId>:delete, $rid-1, "$method response RequestId";
+    is-deeply $res, %res-data, "$method response";
 }
 
 done-testing;

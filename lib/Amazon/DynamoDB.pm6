@@ -576,12 +576,14 @@ method region()     { $.session.region }
 
 method make-ddb-request($target, *%request) {
     use HTTP::Request::Common;
-    use JSON::Tiny;
+    use JSON::Fast;
     use WebService::AWS::Auth::V4;
 
     my %crisp-request = %request.grep({ ?.value });
 
-    my $body = to-json(%crisp-request);
+    # :sorted-keys helps tests pass... we should probably make the tests
+    # smarter, though and drop :sorted-keys
+    my $body = to-json(%crisp-request, :sorted-keys);
     my $uri  = "$!scheme://$.hostname$.port-suffix/";
 
     my %headers =
@@ -669,7 +671,7 @@ method BatchWriteItem(
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
 ) returns Hash {
-    self.make-ddb-request('BatchWriteItems',
+    self.make-ddb-request('BatchWriteItem',
         :%RequestItems,
 
         :$ReturnConsumedCapacity,
