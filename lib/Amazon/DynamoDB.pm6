@@ -18,7 +18,7 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
 
     my $ddb = Amazon::DynamoDB.new
 
-    $ddb.CreateTable(
+    await $ddb.CreateTable(
         AttributeDefinitions => [
             {
                 AttributeName => 'ForumName',
@@ -97,7 +97,7 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
         }
     );
 
-    my $res = $ddb.GetItem(
+    my $res = await $ddb.GetItem(
         TableName => "Thread",
         Key => {
             ForumName => {
@@ -116,12 +116,12 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
 
 =head1 DESCRIPTION
 
-This module provides the low-level API that interacts directly with DynamoDB.
-This is a low-level implementation that sticks as close as possible to the API
-described by AWS, keeping the names of actions and parameter names as-is (i.e.,
-not using nice kabob-case most Perl 6 modules use, but the PascalCase that most
-AWS APIs present natively). This has the benefit of allowing you to use the AWS
-documentation directly.
+This module provides an asynchronous, low-level API that interacts directly with
+DynamoDB.  This is a low-level implementation that sticks as close as possible
+to the API described by AWS, keeping the names of actions and parameter names
+as-is (i.e., not using nice kabob-case most Perl 6 modules use, but the
+PascalCase that most AWS APIs present natively). This has the benefit of
+allowing you to use the AWS documentation directly.
 
 The API is currently very primitive and may change to provide better
 type-checking in the future.
@@ -174,6 +174,18 @@ It provides these attributes:
 =item got-crc32 This is the integer CRC32 we calculated.
 
 =item expected-crc32 This is the integer CRC32 Amazon sent.
+
+=head1 ASYNC API
+
+The API for this is asynchronous. Mostly, this means that the API methods return
+a L<Promise> that will be kept with a L<Hash> containing the results. If you
+want a purely syncrhonous API, you just need to place an C<await> before every
+call to the library.
+
+Under the hood, the implementation is currently implemented to use
+L<Cro::HTTP::Client> if present. If not present, then L<HTTP::UserAgent> is used
+instead, though all actions will run on separate threads from the calling
+thread.
 
 =head1 METHODS
 
