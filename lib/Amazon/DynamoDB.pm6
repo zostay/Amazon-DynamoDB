@@ -254,6 +254,11 @@ the return value.
         Str  :$ReturnConsumedCapacity,
     ) returns Promise
 
+The BatchGetItem operation returns the attributes of one or more items from one
+or more tables. You identify requested items by primary key.
+
+See the L<AWS BatchGetItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html>.
+
 =head2 method BatchWriteItem
 
     method BatchWriteItem(
@@ -261,6 +266,13 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
     ) returns Promise
+
+The BatchWriteItem operation puts or deletes multiple items in one or more
+tables. A single call to BatchWriteItem can write up to 16 MB of data, which can
+comprise as many as 25 put or delete requests. Individual items to be written
+can be as large as 400 KB.
+
+See the L<AWS BatchWriteItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html>.
 
 =head2 method DeleteItem
 
@@ -277,6 +289,12 @@ the return value.
         Str  :$ReturnValues,
     ) returns Promise
 
+Deletes a single item in a table by primary key. You can perform a conditional
+delete operation that deletes the item if it exists, or if it has an expected
+attribute value.
+
+See the L<AWS DeleteItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html>.
+
 =head2 method GetItem
 
     method GetItem(
@@ -288,6 +306,12 @@ the return value.
         Str  :$ProjectionExpression,
         Str  :$ReturnConsumedCapacity,
     ) returns Promise
+
+The GetItem operation returns a set of attributes for the item with the given
+primary key. If there is no matching item, GetItem does not return any data and
+there will be no Item element in the response.
+
+See the L<AWS GetItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html>.
 
 =head2 method PutItem
 
@@ -303,6 +327,16 @@ the return value.
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
     ) returns Promise
+
+Creates a new item, or replaces an old item with a new item. If an item that has
+the same primary key as the new item already exists in the specified table, the
+new item completely replaces the existing item. You can perform a conditional
+put operation (add a new item if one with the specified primary key doesn't
+exist), or replace an existing item if it has certain attribute values. You can
+return the item's attribute values in the same operation, using the ReturnValues
+parameter.
+
+See the L<AWS PutItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html>.
 
 =head2 method Query
 
@@ -326,6 +360,12 @@ the return value.
         Str  :$Select,
     ) returns Promise
 
+The Query operation finds items based on primary key values. You can query any
+table or secondary index that has a composite primary key (a partition key and a
+sort key).
+
+See the L<AWS Query API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html>.
+
 =head2 method Scan
 
     method Scan(
@@ -348,6 +388,12 @@ the return value.
         Int  :$TotalSegments,
     ) returns Promise
 
+The Scan operation returns one or more items and item attributes by accessing
+every item in a table or a secondary index. To have DynamoDB return fewer items,
+you can provide a FilterExpression operation.
+
+See the L<AWS Scan API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html>.
+
 =head2 method UpdateItem
 
     method UpdateItem(
@@ -365,6 +411,14 @@ the return value.
         Str  :$UpdateExpression,
     ) returns Promise
 
+Edits an existing item's attributes, or adds a new item to the table if it does
+not already exist. You can put, delete, or add attribute values. You can also
+perform a conditional update on an existing item (insert a new attribute
+name-value pair if it doesn't exist, or replace an existing name-value pair if
+it has certain expected attribute values).
+
+See the L<AWS UpdateItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html>.
+
 =head2 method CreateTable
 
     method CreateTable(
@@ -378,11 +432,27 @@ the return value.
              :%StreamSpecification,
     ) returns Promise
 
+The CreateTable operation adds a new table to your account. In an AWS account,
+table names must be unique within each region. That is, you can have two tables
+with same name if you create the tables in different regions.
+
+See the L<AWS CreateTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html>.
+
 =head2 method DeleteTable
 
     method DeleteTable(
         Str :$TableName,
     ) returns Promise
+
+The DeleteTable operation deletes a table and all of its items. After a
+DeleteTable request, the specified table is in the DELETING state until DynamoDB
+completes the deletion. If the table is in the ACTIVE state, you can delete it.
+If a table is in CREATING or UPDATING states, then DynamoDB returns a
+ResourceInUseException. If the specified table does not exist, DynamoDB returns
+a ResourceNotFoundException. If table is already in the DELETING state, no error
+is returned.
+
+See the L<AWS DeleteTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html>.
 
 =head2 method DescribeTable
 
@@ -390,11 +460,20 @@ the return value.
         Str  :$TableName!,
     ) returns Promise
 
+Returns information about the table, including the current status of the table,
+when it was created, the primary key schema, and any indexes on the table.
+
+See the L<AWS DescribeTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html>.
+
 =head2 method DescribeTimeToLive
 
     method DescribeTimeToLive(
         Str  :$TableName!,
     ) returns Promise
+
+Gives a description of the Time to Live (TTL) status on the specified table.
+
+See the L<AWS DescribeTimeToLive API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTimeToLive.html>.
 
 =head2 method ListTables
 
@@ -402,6 +481,12 @@ the return value.
         Str  :$ExclusiveStartTableName,
         Int  :$Limit,
     ) returns Promise
+
+Returns an array of table names associated with the current account and
+endpoint. The output from ListTables is paginated, with each page returning a
+maximum of 100 table names.
+
+See the L<AWS ListTables API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html>.
 
 =head2 method UpdateTable
 
@@ -413,12 +498,25 @@ the return value.
              :%StreamSpecification,
     ) returns Promise
 
+Modifies the provisioned throughput settings, global secondary indexes, or
+DynamoDB Streams settings for a given table.
+
+See the L<AWS UpdateTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html>.
+
 =head2 method UpdateTimeToLive
 
     method UpdateTimeToLive(
         Str  :$TableName!,
              :%TableToLiveSpecification!,
     ) returns Promise
+
+The UpdateTimeToLive method will enable or disable TTL for the specified table.
+A successful UpdateTimeToLive call returns the current TimeToLiveSpecification;
+it may take up to one hour for the change to fully process. Any additional
+UpdateTimeToLive calls for the same table during this one hour duration result
+in a ValidationException.
+
+See the L<AWS UpdateTimeToLive API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTimeToLive.html>.
 
 =head2 method CreateGlobalTable
 
@@ -427,11 +525,21 @@ the return value.
              :@ReplicationGroup!,
     ) returns Promise
 
+Creates a global table from an existing table. A global table creates a
+replication relationship between two or more DynamoDB tables with the same table
+name in the provided regions.
+
+See the L<AWS CreateGlobalTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateGlobalTable.html>.
+
 =head2 method DescribeGlobalTable
 
     method DescribeGlobalTable(
         Str  :$GlobalTableName!,
     ) returns Promise
+
+Returns information about the specified global table.
+
+See the L<AWS DescribeGlobalTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeGlobalTable.html>.
 
 =head2 method ListGlobalTables
 
@@ -441,12 +549,24 @@ the return value.
         Str  :$RegionName,
     ) returns Promise
 
+Lists all global tables that have a replica in the specified region.
+
+See the L<AWS ListGlobalTables API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListGlobalTables.html>.
+
 =head2 method UpdateGlobalTable
 
     method UpdateGlobalTable(
         Str  :$GlobalTableName!,
              :@ReplicaUpdates!,
     ) returns Promise
+
+Adds or removes replicas in the specified global table. The global table must
+already exist to be able to use this operation. Any replica to be added must be
+empty, must have the same name as the global table, must have the same key
+schema, and must have DynamoDB Streams enabled and must have same provisioned
+and maximum write capacity units.
+
+See the L<AWS UpdateGlobalTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateGlobalTable.html>.
 
 =head2 method ListTagsOfResource
 
@@ -455,12 +575,24 @@ the return value.
         Str  :$NextToken,
     ) returns Promise
 
+List all tags on an Amazon DynamoDB resource. You can call ListTagsOfResource up
+to 10 times per second, per account.
+
+See the L<AWS ListTagsOfResource API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTagsOfResource.html>.
+
 =head2 method TagResource
 
     method TagResource(
         Str  :$ResourceArn!,
              :@Tags!,
     ) returns Promise
+
+Associate a set of tags with an Amazon DynamoDB resource. You can then activate
+these user-defined tags so that they appear on the Billing and Cost Management
+console for cost allocation tracking. You can call TagResource up to 5 times per
+second, per account.
+
+See the L<AWS TagResource API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TagResource.html>.
 
 =head2 method UntagResource
 
@@ -469,6 +601,11 @@ the return value.
              :@TagKeys!,
     ) returns Promise
 
+Removes the association of tags from an Amazon DynamoDB resource. You can call
+UntagResource up to 5 times per second, per account.
+
+See the L<AWS UntagResource API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UntagResource.html>.
+
 =head2 method CreateBackup
 
     method CreateBackup(
@@ -476,11 +613,19 @@ the return value.
         Str  :$TableName!,
     ) returns Promise
 
+Creates a backup for an existing table.
+
+See the L<AWS CreateBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateBackup.html>.
+
 =head2 method DeleteBackup
 
     method DeleteBackup(
         Str  :$BackupArn!,
     ) returns Promise
+
+Deletes an existing backup of a table.
+
+See the L<AWS DeleteBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteBackup.html>.
 
 =head2 method DescribeBackup
 
@@ -488,11 +633,22 @@ the return value.
         Str  :$BackupArn!,
     ) returns Promise
 
+Describes an existing backup of a table.
+
+See the L<AWS DescribeBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeBackup.html>.
+
 =head2 method DescribeContinuousBackups
 
     method DescribeContinuousBackups(
         Str  :$TableName!,
     ) returns Promise
+
+Checks the status of continuous backups and point in time recovery on the
+specified table. Continuous backups are ENABLED on all tables at table creation.
+If point in time recovery is enabled, PointInTimeRecoveryStatus will be set to
+ENABLED.
+
+See the L<AWS DescribeContinuousBackups API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeContinuousBackups.html>.
 
 =head2 method ListBackups
 
@@ -504,6 +660,13 @@ the return value.
         Int  :$TimeRangeUpperBound,
     ) returns Promise
 
+List backups associated with an AWS account. To list backups for a given table,
+specify TableName. ListBackups returns a paginated list of results with at most
+1MB worth of items in a page. You can also specify a limit for the maximum
+number of entries to be returned in a page.
+
+See the L<AWS ListBackups API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListBackups.html>.
+
 =head2 method RestoreTableFromBackup
 
     method RestoreTableFromBackup(
@@ -511,9 +674,20 @@ the return value.
         Str  :$TargetTableName!,
     ) returns Promise
 
+Creates a new table from an existing backup. Any number of users can execute up
+to 4 concurrent restores (any type of restore) in a given account.
+
+See the L<AWS RestoreTableFromBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_RestoreTableFromBackup.html>.
+
 =head2 method DescribeLimits
 
     method DescribeLimits() returns Promise
+
+Returns the current provisioned-capacity limits for your AWS account in a
+region, both for the region as a whole and for any one DynamoDB table that you
+create there.
+
+See the L<AWS DescribeLimits API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeLimits.html>.
 
 =end pod
 
