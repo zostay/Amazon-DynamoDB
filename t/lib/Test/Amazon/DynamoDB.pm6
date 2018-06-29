@@ -2,14 +2,12 @@ unit module Test::Amazon::DynamoDB;
 use v6;
 
 use Amazon::DynamoDB;
-use Amazon::DynamoDB::UA::Cro;
 
 sub new-dynamodb-actions() is export {
     my ($scheme, $hostname, $port)
         = test-env<scheme hostname port>;
     Amazon::DynamoDB.new(
-        :$scheme, :$hostname, :$port
-        :ua(Amazon::DynamoDB::UA::Cro.new),
+        :$scheme, :$hostname, :$port,
     );
 }
 
