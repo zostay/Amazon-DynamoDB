@@ -16,7 +16,7 @@
    "depends" : [
        "AWS::Session",
        "HTTP::UserAgent",
-       "JSON::Tiny",
+       "JSON::Fast",
        "WebService::AWS::Auth::V4",
        "String::CRC32"
    ],
