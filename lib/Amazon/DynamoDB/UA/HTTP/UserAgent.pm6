@@ -17,18 +17,26 @@ class Amazon::DynamoDB::UA::HTTP::UserAgent does Amazon::DynamoDB::UA {
         self.bless(:$ua);
     }
 
-    method request(:$method, :$uri, :%headers, :$content --> Hash) {
+    method request(:$method, :$uri, :%headers, :$content --> Promise) {
 
-        my $req = POST($uri, |%headers, :$content);
-        my $res = $!ua.request($req, :bin);
+        start {
+            my $req = POST($uri, |%headers, :$content);
+            my $res = $!ua.request($req, :bin);
 
-        %(
-            Status         => $res.code,
-            Header         => % = $res.header.hash.map({
-                .key.lc => .value.join(', ')
-            }),
-            RawContent     => $res.content,
-            DecodedContent => $res.decoded-content,
-        );
+            my $raw = Promise.new;
+            $raw.keep($res.content);
+
+            my $dec = Promise.new;
+            $dec.keep($res.decoded-content);
+
+            %(
+                Status         => $res.code,
+                Header         => % = $res.header.hash.map({
+                    .key.lc => .value.join(', ')
+                }),
+                RawContent     => $raw,
+                DecodedContent => $dec,
+            );
+        }
     }
 }

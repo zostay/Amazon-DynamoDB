@@ -252,7 +252,7 @@ the return value.
     method BatchGetItem(
              :%RequestItems!,
         Str  :$ReturnConsumedCapacity,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method BatchWriteItem
 
@@ -260,7 +260,7 @@ the return value.
              :%RequestItems!
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DeleteItem
 
@@ -275,7 +275,7 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method GetItem
 
@@ -287,7 +287,7 @@ the return value.
              :%ExpressionAttributeNames,
         Str  :$ProjectionExpression,
         Str  :$ReturnConsumedCapacity,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method PutItem
 
@@ -302,7 +302,7 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method Query
 
@@ -324,7 +324,7 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Bool :$ScanIndexForward,
         Str  :$Select,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method Scan
 
@@ -346,7 +346,7 @@ the return value.
         Int  :$Segment,
         Str  :$Select,
         Int  :$TotalSegments,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method UpdateItem
 
@@ -363,7 +363,7 @@ the return value.
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
         Str  :$UpdateExpression,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method CreateTable
 
@@ -376,32 +376,32 @@ the return value.
              :@LocalSecondaryIndexes,
              :%SSESpecification,
              :%StreamSpecification,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DeleteTable
 
     method DeleteTable(
         Str :$TableName,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DescribeTable
 
     method DescribeTable(
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DescribeTimeToLive
 
     method DescribeTimeToLive(
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method ListTables
 
     method ListTables(
         Str  :$ExclusiveStartTableName,
         Int  :$Limit,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method UpdateTable
 
@@ -411,27 +411,27 @@ the return value.
              :@GlobalSecondaryIndexUpdates,
              :%ProvisionedThroughput,
              :%StreamSpecification,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method UpdateTimeToLive
 
     method UpdateTimeToLive(
         Str  :$TableName!,
              :%TableToLiveSpecification!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method CreateGlobalTable
 
     method CreateGlobalTable(
         Str  :$GlobalTableName!,
              :@ReplicationGroup!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DescribeGlobalTable
 
     method DescribeGlobalTable(
         Str  :$GlobalTableName!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method ListGlobalTables
 
@@ -439,60 +439,60 @@ the return value.
         Str  :$ExclusiveStartGlobalTableName,
         Int  :$Limit,
         Str  :$RegionName,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method UpdateGlobalTable
 
     method UpdateGlobalTable(
         Str  :$GlobalTableName!,
              :@ReplicaUpdates!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method ListTagsOfResource
 
     method ListTagsOfResource(
         Str  :$ResourceArn!,
         Str  :$NextToken,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method TagResource
 
     method TagResource(
         Str  :$ResourceArn!,
              :@Tags!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method UntagResource
 
     method UntagResource(
         Str  :$ResourceArn!,
              :@TagKeys!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method CreateBackup
 
     method CreateBackup(
         Str  :$BackupName!,
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DeleteBackup
 
     method DeleteBackup(
         Str  :$BackupArn!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DescribeBackup
 
     method DescribeBackup(
         Str  :$BackupArn!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DescribeContinuousBackups
 
     method DescribeContinuousBackups(
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method ListBackups
 
@@ -502,18 +502,18 @@ the return value.
         Str  :$TableName,
         Int  :$TimeRangeLowerBound,
         Int  :$TimeRangeUpperBound,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method RestoreTableFromBackup
 
     method RestoreTableFromBackup(
         Str  :$BackupArn!,
         Str  :$TargetTableName!,
-    ) returns Hash
+    ) returns Promise
 
 =head2 method DescribeLimits
 
-    method DescribeLimits() returns Hash
+    method DescribeLimits() returns Promise
 
 =end pod
 
@@ -555,7 +555,8 @@ has Str $.domain = 'amazonaws.com';
 has Str $.hostname;
 has Int $.port;
 
-has Amazon::DynamoDB::UA $.ua = Amazon::DynamoDB::UA::AutoUA.new;
+use Amazon::DynamoDB::UA::Cro;
+has Amazon::DynamoDB::UA $.ua = Amazon::DynamoDB::UA::Cro.new;
 
 method hostname() returns Str:D { $!hostname.defined ?? $!hostname !! "dynamodb.$.region.$!domain" }
 method port-suffix() returns Str:D { $!port.defined ?? ":$!port" !! "" }
@@ -604,39 +605,49 @@ method make-ddb-request($target, *%request) {
     %headers<Authorization> = $authorization;
 
     my %req = :method<POST>, :$uri, :%headers, :content($body);
-    my %res = $!ua.request(|%req);
 
-    if %res<Status> == 200 {
-        use String::CRC32;
+    $!ua.request(|%req).then: {
+        my %res = .result;
 
-        my $request-id = %res<Header><x-amzn-requestid>.Str;
-        my $crc32      = Int(%res<Header><x-amz-crc32>.Str);
+        if %res<Status> == 200 {
+            use String::CRC32;
 
-        my $got-crc32 = String::CRC32::crc32(%res<RawContent>);
+            my $request-id = %res<Header><x-amzn-requestid>.Str;
+            my $crc32      = Int(%res<Header><x-amz-crc32>.Str);
 
-        if $crc32 != $got-crc32 {
-            die X::Amazon::DynamoDB::CRCError.new(
-                expected-crc32 => $crc32,
-                got-crc32      => $got-crc32,
-            );
+            my $got-crc32 = String::CRC32::crc32(await %res<RawContent>);
+
+            if $crc32 != $got-crc32 {
+                die X::Amazon::DynamoDB::CRCError.new(
+                    expected-crc32 => $crc32,
+                    got-crc32      => $got-crc32,
+                );
+            }
+
+            my %response = from-json(await %res<DecodedContent>);
+            %response<RequestId> = $request-id;
+
+            # RETURN
+            %response;
         }
+        elsif %res<Status> == 400
+                && %res<Header><content-type> eq 'application/x-amz-json-1.0'
+                && from-json(await %res<DecodedContent>) -> $error {
 
-        my %response = from-json(%res<DecodedContent>);
-        %response<RequestId> = $request-id;
-
-        return %response;
-    }
-    elsif %res<Status> == 400
-            && %res<Header><content-type> eq 'application/x-amz-json-1.0'
-            && from-json(%res<DecodedContent>) -> $error {
-
-        if $error<__type> && $error<message> {
-            my $request-id = %res<x-amzn-requestid>.Str,
-            die X::Amazon::DynamoDB::APIException.new(
-                request-id => $request-id,
-                raw-type   => $error<__type>,
-                message    => $error<message>,
-            );
+            if $error<__type> && $error<message> {
+                my $request-id = %res<x-amzn-requestid>.Str,
+                die X::Amazon::DynamoDB::APIException.new(
+                    request-id => $request-id,
+                    raw-type   => $error<__type>,
+                    message    => $error<message>,
+                );
+            }
+            else {
+                die X::Amazon::DynamoDB::CommunicationError.new(
+                    request  => %req,
+                    response => %res,
+                );
+            }
         }
         else {
             die X::Amazon::DynamoDB::CommunicationError.new(
@@ -644,20 +655,14 @@ method make-ddb-request($target, *%request) {
                 response => %res,
             );
         }
-    }
-    else {
-        die X::Amazon::DynamoDB::CommunicationError.new(
-            request  => %req,
-            response => %res,
-        );
-    }
+    };
 }
 
 method BatchGetItem(
          :%RequestItems!,
 
     Str  :$ReturnConsumedCapacity,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('BatchGetItem',
         :%RequestItems,
 
@@ -670,7 +675,7 @@ method BatchWriteItem(
 
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('BatchWriteItem',
         :%RequestItems,
 
@@ -691,7 +696,7 @@ method DeleteItem(
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DeleteItem',
         :%Key,
         :$TableName,
@@ -716,7 +721,7 @@ method GetItem(
          :%ExpressionAttributeNames,
     Str  :$ProjectionExpression,
     Str  :$ReturnConsumedCapacity,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('GetItem',
         :%Key,
         :$TableName,
@@ -741,7 +746,7 @@ method PutItem(
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('PutItem',
         :%Item,
         :$TableName,
@@ -776,7 +781,7 @@ method Query(
     Str  :$ReturnConsumedCapacity,
     Bool :$ScanIndexForward,
     Str  :$Select,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('Query',
         :$TableName,
 
@@ -818,7 +823,7 @@ method Scan(
     Int  :$Segment,
     Str  :$Select,
     Int  :$TotalSegments,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('Scan',
         :$TableName,
 
@@ -855,7 +860,7 @@ method UpdateItem(
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
     Str  :$UpdateExpression,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateItem',
         :%Key,
         :$TableName,
@@ -883,7 +888,7 @@ method CreateTable(
          :@LocalSecondaryIndexes,
          :%SSESpecification,
          :%StreamSpecification,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('CreateTable',
         :@AttributeDefinitions,
         :$TableName,
@@ -899,26 +904,26 @@ method CreateTable(
 
 method DeleteTable(
     Str :$TableName,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DeleteTable', :$TableName);
 }
 
 method DescribeTable(
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeTable', :$TableName);
 }
 
 method DescribeTimeToLive(
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeTimeToLive', :$TableName);
 }
 
 method ListTables(
     Str  :$ExclusiveStartTableName,
     Int  :$Limit,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListTables',
         :$ExclusiveStartTableName,
         :$Limit,
@@ -932,7 +937,7 @@ method UpdateTable(
          :@GlobalSecondaryIndexUpdates,
          :%ProvisionedThroughput,
          :%StreamSpecification,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateTable',
         :$TableName,
 
@@ -946,7 +951,7 @@ method UpdateTable(
 method UpdateTimeToLive(
     Str  :$TableName!,
          :%TableToLiveSpecification!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateTimeToLive',
         :$TableName,
         :%TableToLiveSpecification,
@@ -956,7 +961,7 @@ method UpdateTimeToLive(
 method CreateGlobalTable(
     Str  :$GlobalTableName!,
          :@ReplicationGroup!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('CreateGlobalTable',
         :$GlobalTableName,
         :@ReplicationGroup,
@@ -965,7 +970,7 @@ method CreateGlobalTable(
 
 method DescribeGlobalTable(
     Str  :$GlobalTableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeGlobalTable',
         :$GlobalTableName,
     );
@@ -975,7 +980,7 @@ method ListGlobalTables(
     Str  :$ExclusiveStartGlobalTableName,
     Int  :$Limit,
     Str  :$RegionName,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListGlobalTables',
         :$ExclusiveStartGlobalTableName,
         :$Limit,
@@ -986,7 +991,7 @@ method ListGlobalTables(
 method UpdateGlobalTable(
     Str  :$GlobalTableName!,
          :@ReplicaUpdates!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateGlobalTable',
         :$GlobalTableName,
         :@ReplicaUpdates,
@@ -997,7 +1002,7 @@ method ListTagsOfResource(
     Str  :$ResourceArn!,
 
     Str  :$NextToken,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListTagsOfResource',
         :$ResourceArn,
 
@@ -1008,7 +1013,7 @@ method ListTagsOfResource(
 method TagResource(
     Str  :$ResourceArn!,
          :@Tags!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-reqeust('TagResource',
         :$ResourceArn,
         :@Tags,
@@ -1018,7 +1023,7 @@ method TagResource(
 method UntagResource(
     Str  :$ResourceArn!,
          :@TagKeys!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UntagResource',
         :$ResourceArn,
         :@TagKeys,
@@ -1028,7 +1033,7 @@ method UntagResource(
 method CreateBackup(
     Str  :$BackupName!,
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('CreateBackup',
         :$BackupName,
         :$TableName,
@@ -1037,19 +1042,19 @@ method CreateBackup(
 
 method DeleteBackup(
     Str  :$BackupArn!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DeleteBackup', :$BackupArn);
 }
 
 method DescribeBackup(
     Str  :$BackupArn!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeBackup', :$BackupArn);
 }
 
 method DescribeContinuousBackups(
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeContinuousBackups', :$TableName);
 }
 
@@ -1059,7 +1064,7 @@ method ListBackups(
     Str  :$TableName,
     Int  :$TimeRangeLowerBound,
     Int  :$TimeRangeUpperBound,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListBackups',
         :$ExclusiveStartBackupArn,
         :$Limit,
@@ -1072,13 +1077,13 @@ method ListBackups(
 method RestoreTableFromBackup(
     Str  :$BackupArn!,
     Str  :$TargetTableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('RestoreTableFromBackup',
         :$BackupArn,
         :$TargetTableName,
     );
 }
 
-method DescribeLimits() returns Hash {
+method DescribeLimits() returns Promise {
     self.make-ddb-request('DescribeLimits');
 }

@@ -14,11 +14,11 @@ class Amazon::DynamoDB::UA::Cro does Amazon::DynamoDB::UA {
         self.bless(:$client);
     }
 
-    method request(:$method, :$uri, :%headers, :$content --> Hash) {
-        await $!client.request($method, $uri, :%headers, body => $content).then({
+    method request(:$method, :$uri, :%headers, :$content --> Promise) {
+        $!client.request($method, $uri, :%headers, body => $content).then({
             with .result {
-                my $raw = await await start .body-blob;
-                my $txt = $raw.decode('UTF-8');
+                my $raw = .body-blob;
+                my $txt = $raw.then({ .result.decode('UTF-8') });
 
                 %(
                     Status         => .status,

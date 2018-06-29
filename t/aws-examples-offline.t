@@ -16,26 +16,28 @@ my $ddb = Amazon::DynamoDB.new(
     hostname => 'testing',
     port => 1234,
     ua => class :: does Amazon::DynamoDB::UA {
-        method request(:$method, :$uri, :%headers, :$content --> Hash) {
-            push @reqs, %(
-                :$method,
-                :$uri,
-                :%headers,
-                :$content,
-            );
+        method request(:$method, :$uri, :%headers, :$content --> Promise) {
+            start {
+                push @reqs, %(
+                    :$method,
+                    :$uri,
+                    :%headers,
+                    :$content,
+                );
 
-            my $text = to-json(@ress.pop, :sorted-keys);
-            my $blob = $text.encode('UTF-8');
+                my $text = start { to-json(@ress.pop, :sorted-keys) };
+                my $blob = $text.then({ .result.encode('UTF-8') });
 
-            return %(
-                Status => 200,
-                Header => %(
-                    x-amzn-requestid => $rid++,
-                    x-amz-crc32     => String::CRC32::crc32($blob),
-                ),
-                RawContent => $blob,
-                DecodedContent => $text,
-            );
+                %(
+                    Status => 200,
+                    Header => %(
+                        x-amzn-requestid => $rid++,
+                        x-amz-crc32     => String::CRC32::crc32(await $blob),
+                    ),
+                    RawContent => $blob,
+                    DecodedContent => $text,
+                );
+            }
         }
     }.new,
 );
@@ -52,7 +54,7 @@ for @methods -> $method {
     my %res-data = test-data("AWS-{$method}-Response");
     @ress.push: %res-data;
 
-    my $res = $ddb."$method"(|%req-data);
+    my $res = await $ddb."$method"(|%req-data);
 
     is @reqs.elems, 1;
 

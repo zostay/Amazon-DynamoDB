@@ -16,7 +16,7 @@ plan 4;
 my $ddb = new-dynamodb-actions();
 
 lives-ok {
-    my $res = $ddb.CreateTable(|test-data('Thread-create'));
+    my $res = await $ddb.CreateTable(|test-data('Thread-create'));
 
     CATCH {
         when X::Amazon::DynamoDB::CommunicationError {
@@ -31,7 +31,7 @@ lives-ok {
 }
 
 lives-ok {
-    my $res = $ddb.DeleteTable(TableName => tn('Thread'));
+    my $res = await $ddb.DeleteTable(TableName => tn('Thread'));
 
     is $res<TableDescription><TableName>, tn('Thread');
 }
