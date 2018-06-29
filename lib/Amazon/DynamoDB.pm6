@@ -3,7 +3,8 @@ use v6;
 
 use AWS::Session;
 use AWS::Credentials;
-use HTTP::UserAgent;
+
+use Amazon::DynamoDB::UA;
 
 =begin pod
 
@@ -17,7 +18,7 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
 
     my $ddb = Amazon::DynamoDB.new
 
-    $ddb.CreateTable(
+    await $ddb.CreateTable(
         AttributeDefinitions => [
             {
                 AttributeName => 'ForumName',
@@ -96,7 +97,7 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
         }
     );
 
-    my $res = $ddb.GetItem(
+    my $res = await $ddb.GetItem(
         TableName => "Thread",
         Key => {
             ForumName => {
@@ -115,12 +116,12 @@ Amazon::DynamoDB - Low-level access to the DynamoDB API
 
 =head1 DESCRIPTION
 
-This module provides the low-level API that interacts directly with DynamoDB.
-This is a low-level implementation that sticks as close as possible to the API
-described by AWS, keeping the names of actions and parameter names as-is (i.e.,
-not using nice kabob-case most Perl 6 modules use, but the PascalCase that most
-AWS APIs present natively). This has the benefit of allowing you to use the AWS
-documentation directly.
+This module provides an asynchronous, low-level API that interacts directly with
+DynamoDB.  This is a low-level implementation that sticks as close as possible
+to the API described by AWS, keeping the names of actions and parameter names
+as-is (i.e., not using nice kabob-case most Perl 6 modules use, but the
+PascalCase that most AWS APIs present natively). This has the benefit of
+allowing you to use the AWS documentation directly.
 
 The API is currently very primitive and may change to provide better
 type-checking in the future.
@@ -173,6 +174,18 @@ It provides these attributes:
 =item got-crc32 This is the integer CRC32 we calculated.
 
 =item expected-crc32 This is the integer CRC32 Amazon sent.
+
+=head1 ASYNC API
+
+The API for this is asynchronous. Mostly, this means that the API methods return
+a L<Promise> that will be kept with a L<Hash> containing the results. If you
+want a purely syncrhonous API, you just need to place an C<await> before every
+call to the library.
+
+Under the hood, the implementation is currently implemented to use
+L<Cro::HTTP::Client> if present. If not present, then L<HTTP::UserAgent> is used
+instead, though all actions will run on separate threads from the calling
+thread.
 
 =head1 METHODS
 
@@ -251,7 +264,12 @@ the return value.
     method BatchGetItem(
              :%RequestItems!,
         Str  :$ReturnConsumedCapacity,
-    ) returns Hash
+    ) returns Promise
+
+The BatchGetItem operation returns the attributes of one or more items from one
+or more tables. You identify requested items by primary key.
+
+See the L<AWS BatchGetItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html>.
 
 =head2 method BatchWriteItem
 
@@ -259,7 +277,14 @@ the return value.
              :%RequestItems!
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
-    ) returns Hash
+    ) returns Promise
+
+The BatchWriteItem operation puts or deletes multiple items in one or more
+tables. A single call to BatchWriteItem can write up to 16 MB of data, which can
+comprise as many as 25 put or delete requests. Individual items to be written
+can be as large as 400 KB.
+
+See the L<AWS BatchWriteItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html>.
 
 =head2 method DeleteItem
 
@@ -274,7 +299,13 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
-    ) returns Hash
+    ) returns Promise
+
+Deletes a single item in a table by primary key. You can perform a conditional
+delete operation that deletes the item if it exists, or if it has an expected
+attribute value.
+
+See the L<AWS DeleteItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html>.
 
 =head2 method GetItem
 
@@ -286,7 +317,13 @@ the return value.
              :%ExpressionAttributeNames,
         Str  :$ProjectionExpression,
         Str  :$ReturnConsumedCapacity,
-    ) returns Hash
+    ) returns Promise
+
+The GetItem operation returns a set of attributes for the item with the given
+primary key. If there is no matching item, GetItem does not return any data and
+there will be no Item element in the response.
+
+See the L<AWS GetItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html>.
 
 =head2 method PutItem
 
@@ -301,7 +338,17 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
-    ) returns Hash
+    ) returns Promise
+
+Creates a new item, or replaces an old item with a new item. If an item that has
+the same primary key as the new item already exists in the specified table, the
+new item completely replaces the existing item. You can perform a conditional
+put operation (add a new item if one with the specified primary key doesn't
+exist), or replace an existing item if it has certain attribute values. You can
+return the item's attribute values in the same operation, using the ReturnValues
+parameter.
+
+See the L<AWS PutItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html>.
 
 =head2 method Query
 
@@ -323,7 +370,13 @@ the return value.
         Str  :$ReturnConsumedCapacity,
         Bool :$ScanIndexForward,
         Str  :$Select,
-    ) returns Hash
+    ) returns Promise
+
+The Query operation finds items based on primary key values. You can query any
+table or secondary index that has a composite primary key (a partition key and a
+sort key).
+
+See the L<AWS Query API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html>.
 
 =head2 method Scan
 
@@ -345,7 +398,13 @@ the return value.
         Int  :$Segment,
         Str  :$Select,
         Int  :$TotalSegments,
-    ) returns Hash
+    ) returns Promise
+
+The Scan operation returns one or more items and item attributes by accessing
+every item in a table or a secondary index. To have DynamoDB return fewer items,
+you can provide a FilterExpression operation.
+
+See the L<AWS Scan API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html>.
 
 =head2 method UpdateItem
 
@@ -362,7 +421,15 @@ the return value.
         Str  :$ReturnItemCollectionMetrics,
         Str  :$ReturnValues,
         Str  :$UpdateExpression,
-    ) returns Hash
+    ) returns Promise
+
+Edits an existing item's attributes, or adds a new item to the table if it does
+not already exist. You can put, delete, or add attribute values. You can also
+perform a conditional update on an existing item (insert a new attribute
+name-value pair if it doesn't exist, or replace an existing name-value pair if
+it has certain expected attribute values).
+
+See the L<AWS UpdateItem API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html>.
 
 =head2 method CreateTable
 
@@ -375,32 +442,63 @@ the return value.
              :@LocalSecondaryIndexes,
              :%SSESpecification,
              :%StreamSpecification,
-    ) returns Hash
+    ) returns Promise
+
+The CreateTable operation adds a new table to your account. In an AWS account,
+table names must be unique within each region. That is, you can have two tables
+with same name if you create the tables in different regions.
+
+See the L<AWS CreateTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html>.
 
 =head2 method DeleteTable
 
     method DeleteTable(
         Str :$TableName,
-    ) returns Hash
+    ) returns Promise
+
+The DeleteTable operation deletes a table and all of its items. After a
+DeleteTable request, the specified table is in the DELETING state until DynamoDB
+completes the deletion. If the table is in the ACTIVE state, you can delete it.
+If a table is in CREATING or UPDATING states, then DynamoDB returns a
+ResourceInUseException. If the specified table does not exist, DynamoDB returns
+a ResourceNotFoundException. If table is already in the DELETING state, no error
+is returned.
+
+See the L<AWS DeleteTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html>.
 
 =head2 method DescribeTable
 
     method DescribeTable(
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
+
+Returns information about the table, including the current status of the table,
+when it was created, the primary key schema, and any indexes on the table.
+
+See the L<AWS DescribeTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html>.
 
 =head2 method DescribeTimeToLive
 
     method DescribeTimeToLive(
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
+
+Gives a description of the Time to Live (TTL) status on the specified table.
+
+See the L<AWS DescribeTimeToLive API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTimeToLive.html>.
 
 =head2 method ListTables
 
     method ListTables(
         Str  :$ExclusiveStartTableName,
         Int  :$Limit,
-    ) returns Hash
+    ) returns Promise
+
+Returns an array of table names associated with the current account and
+endpoint. The output from ListTables is paginated, with each page returning a
+maximum of 100 table names.
+
+See the L<AWS ListTables API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html>.
 
 =head2 method UpdateTable
 
@@ -410,27 +508,50 @@ the return value.
              :@GlobalSecondaryIndexUpdates,
              :%ProvisionedThroughput,
              :%StreamSpecification,
-    ) returns Hash
+    ) returns Promise
+
+Modifies the provisioned throughput settings, global secondary indexes, or
+DynamoDB Streams settings for a given table.
+
+See the L<AWS UpdateTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html>.
 
 =head2 method UpdateTimeToLive
 
     method UpdateTimeToLive(
         Str  :$TableName!,
              :%TableToLiveSpecification!,
-    ) returns Hash
+    ) returns Promise
+
+The UpdateTimeToLive method will enable or disable TTL for the specified table.
+A successful UpdateTimeToLive call returns the current TimeToLiveSpecification;
+it may take up to one hour for the change to fully process. Any additional
+UpdateTimeToLive calls for the same table during this one hour duration result
+in a ValidationException.
+
+See the L<AWS UpdateTimeToLive API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTimeToLive.html>.
 
 =head2 method CreateGlobalTable
 
     method CreateGlobalTable(
         Str  :$GlobalTableName!,
              :@ReplicationGroup!,
-    ) returns Hash
+    ) returns Promise
+
+Creates a global table from an existing table. A global table creates a
+replication relationship between two or more DynamoDB tables with the same table
+name in the provided regions.
+
+See the L<AWS CreateGlobalTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateGlobalTable.html>.
 
 =head2 method DescribeGlobalTable
 
     method DescribeGlobalTable(
         Str  :$GlobalTableName!,
-    ) returns Hash
+    ) returns Promise
+
+Returns information about the specified global table.
+
+See the L<AWS DescribeGlobalTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeGlobalTable.html>.
 
 =head2 method ListGlobalTables
 
@@ -438,60 +559,108 @@ the return value.
         Str  :$ExclusiveStartGlobalTableName,
         Int  :$Limit,
         Str  :$RegionName,
-    ) returns Hash
+    ) returns Promise
+
+Lists all global tables that have a replica in the specified region.
+
+See the L<AWS ListGlobalTables API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListGlobalTables.html>.
 
 =head2 method UpdateGlobalTable
 
     method UpdateGlobalTable(
         Str  :$GlobalTableName!,
              :@ReplicaUpdates!,
-    ) returns Hash
+    ) returns Promise
+
+Adds or removes replicas in the specified global table. The global table must
+already exist to be able to use this operation. Any replica to be added must be
+empty, must have the same name as the global table, must have the same key
+schema, and must have DynamoDB Streams enabled and must have same provisioned
+and maximum write capacity units.
+
+See the L<AWS UpdateGlobalTable API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateGlobalTable.html>.
 
 =head2 method ListTagsOfResource
 
     method ListTagsOfResource(
         Str  :$ResourceArn!,
         Str  :$NextToken,
-    ) returns Hash
+    ) returns Promise
+
+List all tags on an Amazon DynamoDB resource. You can call ListTagsOfResource up
+to 10 times per second, per account.
+
+See the L<AWS ListTagsOfResource API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTagsOfResource.html>.
 
 =head2 method TagResource
 
     method TagResource(
         Str  :$ResourceArn!,
              :@Tags!,
-    ) returns Hash
+    ) returns Promise
+
+Associate a set of tags with an Amazon DynamoDB resource. You can then activate
+these user-defined tags so that they appear on the Billing and Cost Management
+console for cost allocation tracking. You can call TagResource up to 5 times per
+second, per account.
+
+See the L<AWS TagResource API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TagResource.html>.
 
 =head2 method UntagResource
 
     method UntagResource(
         Str  :$ResourceArn!,
              :@TagKeys!,
-    ) returns Hash
+    ) returns Promise
+
+Removes the association of tags from an Amazon DynamoDB resource. You can call
+UntagResource up to 5 times per second, per account.
+
+See the L<AWS UntagResource API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UntagResource.html>.
 
 =head2 method CreateBackup
 
     method CreateBackup(
         Str  :$BackupName!,
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
+
+Creates a backup for an existing table.
+
+See the L<AWS CreateBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateBackup.html>.
 
 =head2 method DeleteBackup
 
     method DeleteBackup(
         Str  :$BackupArn!,
-    ) returns Hash
+    ) returns Promise
+
+Deletes an existing backup of a table.
+
+See the L<AWS DeleteBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteBackup.html>.
 
 =head2 method DescribeBackup
 
     method DescribeBackup(
         Str  :$BackupArn!,
-    ) returns Hash
+    ) returns Promise
+
+Describes an existing backup of a table.
+
+See the L<AWS DescribeBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeBackup.html>.
 
 =head2 method DescribeContinuousBackups
 
     method DescribeContinuousBackups(
         Str  :$TableName!,
-    ) returns Hash
+    ) returns Promise
+
+Checks the status of continuous backups and point in time recovery on the
+specified table. Continuous backups are ENABLED on all tables at table creation.
+If point in time recovery is enabled, PointInTimeRecoveryStatus will be set to
+ENABLED.
+
+See the L<AWS DescribeContinuousBackups API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeContinuousBackups.html>.
 
 =head2 method ListBackups
 
@@ -501,24 +670,42 @@ the return value.
         Str  :$TableName,
         Int  :$TimeRangeLowerBound,
         Int  :$TimeRangeUpperBound,
-    ) returns Hash
+    ) returns Promise
+
+List backups associated with an AWS account. To list backups for a given table,
+specify TableName. ListBackups returns a paginated list of results with at most
+1MB worth of items in a page. You can also specify a limit for the maximum
+number of entries to be returned in a page.
+
+See the L<AWS ListBackups API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListBackups.html>.
 
 =head2 method RestoreTableFromBackup
 
     method RestoreTableFromBackup(
         Str  :$BackupArn!,
         Str  :$TargetTableName!,
-    ) returns Hash
+    ) returns Promise
+
+Creates a new table from an existing backup. Any number of users can execute up
+to 4 concurrent restores (any type of restore) in a given account.
+
+See the L<AWS RestoreTableFromBackup API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_RestoreTableFromBackup.html>.
 
 =head2 method DescribeLimits
 
-    method DescribeLimits() returns Hash
+    method DescribeLimits() returns Promise
+
+Returns the current provisioned-capacity limits for your AWS account in a
+region, both for the region as a whole and for any one DynamoDB table that you
+create there.
+
+See the L<AWS DescribeLimits API documentation|https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeLimits.html>.
 
 =end pod
 
 class GLOBAL::X::Amazon::DynamoDB::CommunicationError is Exception {
-    has HTTP::Request $.request;
-    has HTTP::Response $.response;
+    has %.request;
+    has %.response;
 
     method message() { "Communication Error" }
 }
@@ -554,7 +741,8 @@ has Str $.domain = 'amazonaws.com';
 has Str $.hostname;
 has Int $.port;
 
-has HTTP::UserAgent $.ua .= new(:useragent("perl6-$?PACKAGE.^name()/$?PACKAGE.^ver()"));
+use Amazon::DynamoDB::UA::Cro;
+has Amazon::DynamoDB::UA $.ua = Amazon::DynamoDB::UA::Cro.new;
 
 method hostname() returns Str:D { $!hostname.defined ?? $!hostname !! "dynamodb.$.region.$!domain" }
 method port-suffix() returns Str:D { $!port.defined ?? ":$!port" !! "" }
@@ -575,12 +763,14 @@ method region()     { $.session.region }
 
 method make-ddb-request($target, *%request) {
     use HTTP::Request::Common;
-    use JSON::Tiny;
+    use JSON::Fast;
     use WebService::AWS::Auth::V4;
 
     my %crisp-request = %request.grep({ ?.value });
 
-    my $body = to-json(%crisp-request);
+    # :sorted-keys helps tests pass... we should probably make the tests
+    # smarter, though and drop :sorted-keys
+    my $body = to-json(%crisp-request, :sorted-keys);
     my $uri  = "$!scheme://$.hostname$.port-suffix/";
 
     my %headers =
@@ -600,61 +790,65 @@ method make-ddb-request($target, *%request) {
     my $authorization = $v4.signing-header.substr("Authorization: ".chars);
     %headers<Authorization> = $authorization;
 
-    my $req = POST($uri, :content($body), |%headers);
-    my $res = $!ua.request($req, :bin);
+    my %req = :method<POST>, :$uri, :%headers, :content($body);
 
-    if $res.is-success {
-        use String::CRC32;
+    $!ua.request(|%req).then: {
+        my %res = .result;
 
-        my $request-id = $res.field('X-Amzn-RequestId').Str;
-        my $crc32      = Int($res.field('X-Amz-Crc32').Str);
+        if %res<Status> == 200 {
+            use String::CRC32;
 
-        my $got-crc32 = String::CRC32::crc32($res.content);
+            my $request-id = %res<Header><x-amzn-requestid>.Str;
+            my $crc32      = Int(%res<Header><x-amz-crc32>.Str);
 
-        if $crc32 != $got-crc32 {
-            die X::Amazon::DynamoDB::CRCError.new(
-                expected-crc32 => $crc32,
-                got-crc32      => $got-crc32,
-            );
+            my $got-crc32 = String::CRC32::crc32(await %res<RawContent>);
+
+            if $crc32 != $got-crc32 {
+                die X::Amazon::DynamoDB::CRCError.new(
+                    expected-crc32 => $crc32,
+                    got-crc32      => $got-crc32,
+                );
+            }
+
+            my %response = from-json(await %res<DecodedContent>);
+            %response<RequestId> = $request-id;
+
+            # RETURN
+            %response;
         }
+        elsif %res<Status> == 400
+                && %res<Header><content-type> eq 'application/x-amz-json-1.0'
+                && from-json(await %res<DecodedContent>) -> $error {
 
-        my %response = from-json($res.decoded-content);
-        %response<RequestId> = $request-id;
-
-        return %response;
-    }
-    elsif $res.code == 400
-            && $res.content-type eq 'application/x-amz-json-1.0'
-            && from-json($res.decoded-content) -> $error {
-
-        if $error<__type> && $error<message> {
-            my $request-id = $res.field('X-Amzn-RequestId').Str,
-            die X::Amazon::DynamoDB::APIException.new(
-                request-id => $request-id,
-                raw-type   => $error<__type>,
-                message    => $error<message>,
-            );
+            if $error<__type> && $error<message> {
+                my $request-id = %res<x-amzn-requestid>.Str,
+                die X::Amazon::DynamoDB::APIException.new(
+                    request-id => $request-id,
+                    raw-type   => $error<__type>,
+                    message    => $error<message>,
+                );
+            }
+            else {
+                die X::Amazon::DynamoDB::CommunicationError.new(
+                    request  => %req,
+                    response => %res,
+                );
+            }
         }
         else {
             die X::Amazon::DynamoDB::CommunicationError.new(
-                request  => $req,
-                response => $res,
+                request  => %req,
+                response => %res,
             );
         }
-    }
-    else {
-        die X::Amazon::DynamoDB::CommunicationError.new(
-            request  => $req,
-            response => $res,
-        );
-    }
+    };
 }
 
 method BatchGetItem(
          :%RequestItems!,
 
     Str  :$ReturnConsumedCapacity,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('BatchGetItem',
         :%RequestItems,
 
@@ -667,8 +861,8 @@ method BatchWriteItem(
 
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
-) returns Hash {
-    self.make-ddb-request('BatchWriteItems',
+) returns Promise {
+    self.make-ddb-request('BatchWriteItem',
         :%RequestItems,
 
         :$ReturnConsumedCapacity,
@@ -688,7 +882,7 @@ method DeleteItem(
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DeleteItem',
         :%Key,
         :$TableName,
@@ -713,7 +907,7 @@ method GetItem(
          :%ExpressionAttributeNames,
     Str  :$ProjectionExpression,
     Str  :$ReturnConsumedCapacity,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('GetItem',
         :%Key,
         :$TableName,
@@ -738,7 +932,7 @@ method PutItem(
     Str  :$ReturnConsumedCapacity,
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('PutItem',
         :%Item,
         :$TableName,
@@ -773,7 +967,7 @@ method Query(
     Str  :$ReturnConsumedCapacity,
     Bool :$ScanIndexForward,
     Str  :$Select,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('Query',
         :$TableName,
 
@@ -815,7 +1009,7 @@ method Scan(
     Int  :$Segment,
     Str  :$Select,
     Int  :$TotalSegments,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('Scan',
         :$TableName,
 
@@ -852,7 +1046,7 @@ method UpdateItem(
     Str  :$ReturnItemCollectionMetrics,
     Str  :$ReturnValues,
     Str  :$UpdateExpression,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateItem',
         :%Key,
         :$TableName,
@@ -880,7 +1074,7 @@ method CreateTable(
          :@LocalSecondaryIndexes,
          :%SSESpecification,
          :%StreamSpecification,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('CreateTable',
         :@AttributeDefinitions,
         :$TableName,
@@ -896,26 +1090,26 @@ method CreateTable(
 
 method DeleteTable(
     Str :$TableName,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DeleteTable', :$TableName);
 }
 
 method DescribeTable(
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeTable', :$TableName);
 }
 
 method DescribeTimeToLive(
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeTimeToLive', :$TableName);
 }
 
 method ListTables(
     Str  :$ExclusiveStartTableName,
     Int  :$Limit,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListTables',
         :$ExclusiveStartTableName,
         :$Limit,
@@ -929,7 +1123,7 @@ method UpdateTable(
          :@GlobalSecondaryIndexUpdates,
          :%ProvisionedThroughput,
          :%StreamSpecification,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateTable',
         :$TableName,
 
@@ -943,7 +1137,7 @@ method UpdateTable(
 method UpdateTimeToLive(
     Str  :$TableName!,
          :%TableToLiveSpecification!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateTimeToLive',
         :$TableName,
         :%TableToLiveSpecification,
@@ -953,7 +1147,7 @@ method UpdateTimeToLive(
 method CreateGlobalTable(
     Str  :$GlobalTableName!,
          :@ReplicationGroup!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('CreateGlobalTable',
         :$GlobalTableName,
         :@ReplicationGroup,
@@ -962,7 +1156,7 @@ method CreateGlobalTable(
 
 method DescribeGlobalTable(
     Str  :$GlobalTableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeGlobalTable',
         :$GlobalTableName,
     );
@@ -972,7 +1166,7 @@ method ListGlobalTables(
     Str  :$ExclusiveStartGlobalTableName,
     Int  :$Limit,
     Str  :$RegionName,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListGlobalTables',
         :$ExclusiveStartGlobalTableName,
         :$Limit,
@@ -983,7 +1177,7 @@ method ListGlobalTables(
 method UpdateGlobalTable(
     Str  :$GlobalTableName!,
          :@ReplicaUpdates!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UpdateGlobalTable',
         :$GlobalTableName,
         :@ReplicaUpdates,
@@ -994,7 +1188,7 @@ method ListTagsOfResource(
     Str  :$ResourceArn!,
 
     Str  :$NextToken,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListTagsOfResource',
         :$ResourceArn,
 
@@ -1005,7 +1199,7 @@ method ListTagsOfResource(
 method TagResource(
     Str  :$ResourceArn!,
          :@Tags!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-reqeust('TagResource',
         :$ResourceArn,
         :@Tags,
@@ -1015,7 +1209,7 @@ method TagResource(
 method UntagResource(
     Str  :$ResourceArn!,
          :@TagKeys!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('UntagResource',
         :$ResourceArn,
         :@TagKeys,
@@ -1025,7 +1219,7 @@ method UntagResource(
 method CreateBackup(
     Str  :$BackupName!,
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('CreateBackup',
         :$BackupName,
         :$TableName,
@@ -1034,19 +1228,19 @@ method CreateBackup(
 
 method DeleteBackup(
     Str  :$BackupArn!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DeleteBackup', :$BackupArn);
 }
 
 method DescribeBackup(
     Str  :$BackupArn!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeBackup', :$BackupArn);
 }
 
 method DescribeContinuousBackups(
     Str  :$TableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('DescribeContinuousBackups', :$TableName);
 }
 
@@ -1056,7 +1250,7 @@ method ListBackups(
     Str  :$TableName,
     Int  :$TimeRangeLowerBound,
     Int  :$TimeRangeUpperBound,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('ListBackups',
         :$ExclusiveStartBackupArn,
         :$Limit,
@@ -1069,13 +1263,13 @@ method ListBackups(
 method RestoreTableFromBackup(
     Str  :$BackupArn!,
     Str  :$TargetTableName!,
-) returns Hash {
+) returns Promise {
     self.make-ddb-request('RestoreTableFromBackup',
         :$BackupArn,
         :$TargetTableName,
     );
 }
 
-method DescribeLimits() returns Hash {
+method DescribeLimits() returns Promise {
     self.make-ddb-request('DescribeLimits');
 }

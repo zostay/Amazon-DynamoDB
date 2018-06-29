@@ -15,11 +15,11 @@ plan 10;
 
 my $ddb = new-dynamodb-actions();
 
-$ddb.CreateTable(|test-data('Thread-create'));
-LAST $ddb.DeleteTable(TableName => tn('Thread'));
+await $ddb.CreateTable(|test-data('Thread-create'));
+LAST await $ddb.DeleteTable(TableName => tn('Thread'));
 
 lives-ok {
-    my $res = $ddb.PutItem(|test-data('Thread-put'));
+    my $res = await $ddb.PutItem(|test-data('Thread-put'));
 
     # CATCH {
     #     when X::Amazon::DynamoDB::CommunicationError {
@@ -34,7 +34,7 @@ lives-ok {
 }
 
 lives-ok {
-    my $res = $ddb.GetItem(|test-data('Thread-get'));
+    my $res = await $ddb.GetItem(|test-data('Thread-get'));
 
     is $res<Item><LastPostDateTime><S>, '201303190422';
     is $res<Item><Message><S>, "I want to update multiple items in a single call. What's the best way to do that?";
@@ -42,7 +42,7 @@ lives-ok {
 }
 
 lives-ok {
-    my $res = $ddb.DeleteItem(|test-data('Thread-delete'));
+    my $res = await $ddb.DeleteItem(|test-data('Thread-delete'));
 
     is $res<Attributes><LastPostDateTime><S>, '201303190422';
     is $res<Attributes><Message><S>, "I want to update multiple items in a single call. What's the best way to do that?";
