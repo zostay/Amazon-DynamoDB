@@ -3,7 +3,7 @@
    "provides" : {
        "Amazon::DynamoDB" : "lib/Amazon/DynamoDB.pm6",
        "Amazon::DynamoDB::UA": "lib/Amazon/DynamoDB/UA.pm6",
-       "Amazon::DynamoDB::UA::AutoUA": "lib/Amazon/DynamoDB/UA/AutoUA.pm6",
+       "Amazon::DynamoDB::UA::AutoUA": "lib/Amazon/DynamoDB/UA.pm6",
        "Amazon::DynamoDB::UA::HTTP::UserAgent": "lib/Amazon/DynamoDB/UA/HTTP/UserAgent.pm6",
        "Amazon::DynamoDB::UA::Cro": "lib/Amazon/DynamoDB/UA/Cro.pm6"
    },
