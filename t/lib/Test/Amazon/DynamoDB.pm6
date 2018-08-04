@@ -3,6 +3,7 @@ use v6;
 
 use Amazon::DynamoDB;
 use AWS::Credentials;
+use AWS::Session;
 
 my constant $resolver = AWS::Credentials::Provider::FromEnv.new(
     :access-key<TEST_AWS_DDB_ACCESS_KEY_ID>,
@@ -11,12 +12,41 @@ my constant $resolver = AWS::Credentials::Provider::FromEnv.new(
     :expiry-time<TEST_AWS_DDB_CREDENTIAL_EXPIRATION>,
 );
 
-sub new-dynamodb-actions() is export {
-    my ($scheme, $hostname, $port)
-        = test-env<scheme hostname port>;
-    my $credentials = load-credentials(:$resolver);
+sub test-session() is export {
+    AWS::Session.new(
+        config-file      => 't/aws/config'.IO,
+        credentials-file => 't/aws/credentials'.IO,
+        region           => 'us-east-1',
+    );
+}
+
+sub test-credentials() is export {
+    AWS::Credentials.new(
+        access-key => 'AKISUCHABADIDEATOHAV',
+        secret-key => 'PJaLYouReallyOughtNotToDoThisOrPainComes',
+    );
+}
+
+sub new-dynamodb-actions(
+    :$ua is copy,
+    :$scheme is copy,
+    :$hostname is copy,
+    :$port is copy,
+    :$session is copy,
+    :$credentials is copy,
+) is export {
+    $scheme      //= test-env<scheme>;
+    $hostname    //= test-env<hostname>;
+    $port        //= test-env<port>;
+
+    $session     //= test-session();
+    $credentials //= test-credentials();
+
     Amazon::DynamoDB.new(
-        :$scheme, :$hostname, :$port, :$credentials,
+        :$scheme, :$hostname, :$port,
+        :$session,
+        :$credentials,
+        |(:$ua with $ua),
     );
 }
 

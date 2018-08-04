@@ -11,11 +11,11 @@ use Test::Amazon::DynamoDB;
 my $rid = 1;
 my @reqs;
 my @ress;
-my $ddb = Amazon::DynamoDB.new(
-    scheme => 'https',
+my $ddb = new-dynamodb-actions(
+    scheme   => 'https',
     hostname => 'testing',
-    port => 1234,
-    ua => class :: does Amazon::DynamoDB::UA {
+    port     => 1234,
+    ua       => class :: does Amazon::DynamoDB::UA {
         method request(:$method, :$uri, :%headers, :$content --> Promise) {
             start {
                 push @reqs, %(
