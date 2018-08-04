@@ -2,12 +2,21 @@ unit module Test::Amazon::DynamoDB;
 use v6;
 
 use Amazon::DynamoDB;
+use AWS::Credentials;
+
+my constant $resolver = AWS::Credentials::Provider::FromEnv.new(
+    :access-key<TEST_AWS_DDB_ACCESS_KEY_ID>,
+    :secret-key<TEST_AWS_DDB_SECRET_ACCESS_KEY>,
+    :token<TEST_AWS_DDB_SECURITY_TOKEN TEST_AWS_DDB_SESSION_TOKEN>,
+    :expiry-time<TEST_AWS_DDB_CREDENTIAL_EXPIRATION>,
+);
 
 sub new-dynamodb-actions() is export {
     my ($scheme, $hostname, $port)
         = test-env<scheme hostname port>;
+    my $credentials = load-credentials(:$resolver);
     Amazon::DynamoDB.new(
-        :$scheme, :$hostname, :$port,
+        :$scheme, :$hostname, :$port, :$credentials,
     );
 }
 
