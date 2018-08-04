@@ -1,3 +1,9 @@
+v0.2    2018-08-03
+
+    * Bugfix #1: Tests were reading AWS credentials files needlessly. Tests
+      should now be performed using custom test environment variables only (see
+      Test::Amazon::DynamoDB in `t/lib` for details). (HT: @MattOates)
+
 v0.1    2018-06-29
 
     * Initial release.
