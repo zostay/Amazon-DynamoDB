@@ -1,3 +1,7 @@
+{{$NEXT}}
+
+    * Bugfix: Cro::HTTP was missing from the build dependencies.
+
 v0.2    2018-08-03
 
     * Bugfix #1: Tests were reading AWS credentials files needlessly. Tests
