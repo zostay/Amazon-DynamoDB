@@ -19,6 +19,7 @@
    "source-url" : "git://github.com/zostay/Amazon-DynamoDB.git",
    "depends" : [
        "AWS::Session",
+       "Cro::HTTP",
        "HTTP::UserAgent",
        "JSON::Fast",
        "WebService::AWS::Auth::V4",
