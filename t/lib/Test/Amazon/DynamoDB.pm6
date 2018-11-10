@@ -1,5 +1,5 @@
-unit module Test::Amazon::DynamoDB;
 use v6;
+unit module Test::Amazon::DynamoDB;
 
 use Amazon::DynamoDB;
 use AWS::Credentials;

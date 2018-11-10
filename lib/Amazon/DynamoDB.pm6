@@ -1,5 +1,5 @@
-unit class Amazon::DynamoDB:ver<0.3>:auth<github:zostay>;
 use v6;
+unit class Amazon::DynamoDB:ver<0.3>:auth<github:zostay>;
 
 use AWS::Session;
 use AWS::Credentials;
