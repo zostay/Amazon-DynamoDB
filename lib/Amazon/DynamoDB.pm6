@@ -798,8 +798,8 @@ method make-ddb-request($target, *%request) {
         if %res<Status> == 200 {
             use String::CRC32;
 
-            my $request-id = %res<Header><x-amzn-requestid>.Str;
-            my $crc32      = Int(%res<Header><x-amz-crc32>.Str);
+            my $request-id = ~%res<Header><x-amzn-requestid>;
+            my $crc32      = Int(~%res<Header><x-amz-crc32>);
 
             my $got-crc32 = String::CRC32::crc32(await %res<RawContent>);
 
@@ -821,7 +821,7 @@ method make-ddb-request($target, *%request) {
                 && from-json(await %res<DecodedContent>) -> $error {
 
             if $error<__type> && $error<message> {
-                my $request-id = %res<x-amzn-requestid>.Str,
+                my $request-id = ~%res<Header><x-amzn-requestid>;
                 die X::Amazon::DynamoDB::APIException.new(
                     request-id => $request-id,
                     raw-type   => $error<__type>,
